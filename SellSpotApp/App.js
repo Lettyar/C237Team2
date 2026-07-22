@@ -156,8 +156,10 @@ function validateRegistration(req, res, next) {
 }
 
 // mag
-// Display all marketplace items
-app.get('/item', (req, res) => {
+// Display one listing details
+app.get('/listing/:id', (req, res) => {
+  const listingId = parseInt(req.params.id);
+
   const sql = `
     SELECT
       item_id AS id,
@@ -170,22 +172,24 @@ app.get('/item', (req, res) => {
       status,
       created_at
     FROM items
-    WHERE status != 'unlisted'
-    ORDER BY created_at DESC
+    WHERE item_id = ?
   `;
 
-  connection.query(sql, (error, results) => {
+  connection.query(sql, [listingId], (error, results) => {
     if (error) {
-      console.error('Error retrieving items:', error);
+      console.error('Error retrieving listing:', error);
       return res.status(500).send('Database error');
     }
 
-    res.render('item', {
-      items: results
+    if (results.length === 0) {
+      return res.status(404).send('Listing not found');
+    }
+
+    res.render('listing', {
+      listing: results[0]
     });
   });
 });
-
 
 // eant 
 // Display one listing
