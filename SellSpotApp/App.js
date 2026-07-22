@@ -71,6 +71,14 @@ function canManageListing(user, listing) {
   return user.role === 'admin' || user.id === listing.sellerId;
 }
 
+// Display all marketplace listings
+// mag
+app.get('/items', (req, res) => {
+  res.render('item', {
+    items: listings
+  });
+});
+
 // Display all listings with simple search and category filtering
 // eant 
 // Display one listing
