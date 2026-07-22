@@ -461,28 +461,46 @@ app.post('/editListing/:id', checkAuthenticated, upload.single('image'), (req, r
     res.redirect(`/listing/${currentListing.id}`);
 });
 
+//Zuo Jing
 // Delete listing
 app.get('/deleteListing/:id', checkAuthenticated, (req, res) => {
   const listingId = Number.parseInt(req.params.id, 10);
-  const listingIndex = listings.findIndex(
-    (item) => item.id === listingId
-  );
 
-  if (listingIndex === -1) {
-    return res.status(404).send('Listing not found');
-  }
+  const checkSql = 'SELECT * FROM items WHERE item_id = ?';
+  
+  connection.query(checkSql, [listingId], (err, results) => {
+    if (err) {
+      console.error('Database error:', err);
+      req.flash('error', 'Database error occurred.');
+      return res.redirect('/myListings');
+    }
 
-  const listing = listings[listingIndex];
+    if (results.length === 0) {
+      req.flash('error', 'Listing not found.');
+      return res.redirect('/myListings');
+    }
 
-  if (!canManageListing(req.session.user, listing)) {
-    req.flash('error', 'You cannot delete this listing.');
-    return res.redirect('/');
-  }
+    const listing = results[0];
+    const currentUser = req.session.user;
 
-  listings.splice(listingIndex, 1);
+    if (currentUser.role !== 'admin' && currentUser.user_id !== listing.user_id) {
+      req.flash('error', 'You do not have permission to delete this listing.');
+      return res.redirect('/myListings');
+    }
 
-  req.flash('success', 'Listing deleted successfully.');
-  return res.redirect('/myListings');
+    const deleteSql = 'DELETE FROM items WHERE item_id = ?';
+    
+    connection.query(deleteSql, [listingId], (err, result) => {
+      if (err) {
+        console.error('Delete error:', err);
+        req.flash('error', 'Failed to delete listing.');
+        return res.redirect('/myListings');
+      }
+
+      req.flash('success', 'Listing deleted successfully.');
+      return res.redirect('/myListings');
+    });
+  });
 });
 
 // Start server
