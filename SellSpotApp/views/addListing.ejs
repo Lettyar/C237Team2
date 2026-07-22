@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Add Listing - SellSpot</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <nav class="navbar bg-dark navbar-dark">
+    <div class="container">
+      <a class="navbar-brand" href="/">SellSpot</a>
+      <div>
+        <a class="btn btn-outline-light me-2" href="/myListings">My Listings</a>
+        <a class="btn btn-light" href="/">Home</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container mt-5 mb-5">
+    <div class="row justify-content-center">
+      <div class="col-lg-8">
+        <div class="card shadow">
+          <div class="card-header bg-success text-white">
+            <h2 class="h4 mb-0">Add New Listing</h2>
+          </div>
+          <div class="card-body">
+            <form action="/addListing" method="POST" enctype="multipart/form-data">
+              <div class="mb-3">
+                <label for="title" class="form-label">Item Title</label>
+                <input type="text" class="form-control" id="title" name="title" required>
+              </div>
+
+              <div class="mb-3">
+                <label for="description" class="form-label">Description</label>
+                <textarea class="form-control" id="description" name="description" rows="4" required></textarea>
+              </div>
+
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label for="price" class="form-label">Price ($)</label>
+                  <input type="number" class="form-control" id="price" name="price" min="0" step="0.01" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label for="category" class="form-label">Category</label>
+                  <select class="form-select" id="category" name="category" required>
+                    <option value="Electronics">Electronics</option>
+                    <option value="Fashion">Fashion</option>
+                    <option value="Home">Home</option>
+                    <option value="Books">Books</option>
+                    <option value="Others">Others</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label for="condition" class="form-label">Condition</label>
+                  <select class="form-select" id="condition" name="condition" required>
+                    <option value="Like New">Like New</option>
+                    <option value="Good">Good</option>
+                    <option value="Fair">Fair</option>
+                    <option value="Well Used">Well Used</option>
+                  </select>
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label for="location" class="form-label">Meet-up Location</label>
+                  <input type="text" class="form-control" id="location" name="location" required>
+                </div>
+              </div>
+
+              <div class="mb-4">
+                <label for="image" class="form-label">Item Image</label>
+                <input type="file" class="form-control" id="image" name="image" accept="image/*">
+              </div>
+
+              <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-success">Add Listing</button>
+                <a href="/" class="btn btn-secondary">Cancel</a>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+
