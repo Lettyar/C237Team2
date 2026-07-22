@@ -87,6 +87,7 @@ app.get('/', (req, res) => {
       price,
       condition_status AS \`condition\`,
       image_url AS image,
+      (image_data IS NOT NULL) AS hasDatabaseImage,
       category_id AS category,
       status,
       created_at,
@@ -156,7 +157,7 @@ function validateRegistration(req, res, next) {
 }
 
 // mag
-// Display one listing details
+// Display one listing
 app.get('/listing/:id', (req, res) => {
   const listingId = parseInt(req.params.id);
 
@@ -168,8 +169,10 @@ app.get('/listing/:id', (req, res) => {
       price,
       condition_status AS \`condition\`,
       image_url AS image,
+      (image_data IS NOT NULL) AS hasDatabaseImage,
       category_id AS category,
       status,
+      created_by AS sellerId,
       created_at
     FROM items
     WHERE item_id = ?
@@ -177,39 +180,26 @@ app.get('/listing/:id', (req, res) => {
 
   connection.query(sql, [listingId], (error, results) => {
     if (error) {
-      console.error('Error retrieving listing:', error);
-      return res.status(500).send('Database error');
+      console.error(
+        'Error retrieving listing:',
+        error
+      );
+
+      return res
+        .status(500)
+        .send('Database error');
     }
 
     if (results.length === 0) {
-      return res.status(404).send('Listing not found');
+      return res
+        .status(404)
+        .send('Listing not found');
     }
 
     res.render('listing', {
       listing: results[0]
     });
   });
-});
-
-// eant 
-// Display one listing
-app.get('/listing/:id', (req, res) => {
-  const listingId = parseInt(req.params.id);
-  const listing = listings.find((item) => item.id === listingId);
-
-  if (listing) {
-    res.render('listing', { listing: listing });
-  } else {
-    res.send('Listing not found');
-  }
-});
-
-// Display registration form
-app.get('/register', (req, res) => {
-    res.render('register', {
-        messages: req.flash('error'),
-        formData: req.flash('formData')[0] || {}
-    });
 });
 
 // Create a local account
