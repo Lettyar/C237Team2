@@ -267,65 +267,74 @@ app.get('/myListings', checkAuthenticated, (req, res) => {
   res.render('myListings', { listings: results });
 });
 
-// Display edit listing form
+
+// Show Edit Listing Page (GET) Gurjeet
 app.get('/editListing/:id', checkAuthenticated, (req, res) => {
-  const listingId = Number.parseInt(req.params.id, 10);
-  const listing = listings.find((item) => item.id === listingId);
 
-  if (!listing) {
-    return res.status(404).send('Listing not found');
-  }
+    // Get the listing ID from the URL and convert it into a number
+    const id = parseInt(req.params.id);
 
-  if (!canManageListing(req.session.user, listing)) {
-    req.flash('error', 'You cannot edit this listing.');
-    return res.redirect('/');
-  }
+    // Search the listings array for the listing with the matching ID
+    const currentListing = listings.find(listing => listing.id === id);
 
-  res.render('editListing', { listing });
+    // If no listing is found, return a 404 error
+    if (!currentListing) {
+        return res.status(404).send('Listing not found.');
+    }
+
+    // Check whether the logged-in user is allowed to edit this listing
+    if (!canManageListing(req.session.user, currentListing)) {
+        req.flash('error', 'You do not have permission to edit this listing.');
+        return res.redirect('/');
+    }
+
+    // Open the editListing.ejs page and send the listing data to it
+    res.render('editListing', {
+        listing: currentListing
+    });
 });
 
-// Update listing
-app.post(
-  '/editListing/:id',
-  checkAuthenticated,
-  upload.single('image'),
-  (req, res) => {
-    const listingId = Number.parseInt(req.params.id, 10);
-    const listing = listings.find((item) => item.id === listingId);
 
-    if (!listing) {
-      return res.status(404).send('Listing not found');
+
+// Update Listing (POST) Gurjeet
+app.post('/editListing/:id', checkAuthenticated, upload.single('image'), (req, res) => {
+
+    // Get the listing ID from the URL
+    const id = parseInt(req.params.id);
+
+    // Find the listing that the user wants to edit
+    const currentListing = listings.find(listing => listing.id === id);
+
+    // If the listing doesn't exist, show an error
+    if (!currentListing) {
+        return res.status(404).send('Listing not found.');
     }
 
-    if (!canManageListing(req.session.user, listing)) {
-      req.flash('error', 'You cannot edit this listing.');
-      return res.redirect('/');
+    // Check if the user has permission to edit this listing
+    if (!canManageListing(req.session.user, currentListing)) {
+        req.flash('error', 'You do not have permission to edit this listing.');
+        return res.redirect('/');
     }
 
-    const {
-      title,
-      description,
-      price,
-      category,
-      condition,
-      location
-    } = req.body;
+    // Update the listing details using the values submitted from the form
+    currentListing.title = req.body.title;
+    currentListing.description = req.body.description;
+    currentListing.price = req.body.price;
+    currentListing.category = req.body.category;
+    currentListing.condition = req.body.condition;
+    currentListing.location = req.body.location;
 
-    listing.title = title;
-    listing.description = description;
-    listing.price = price;
-    listing.category = category;
-    listing.condition = condition;
-    listing.location = location;
-
+    // If the user uploads a new image, replace the old image filename
     if (req.file) {
-      listing.image = req.file.filename;
+        currentListing.image = req.file.filename;
     }
 
-    req.flash('success', 'Listing updated successfully.');
-    return res.redirect('/listing/' + listing.id);
-  }
-);
+    // Store a success message to display after redirecting
+    req.flash('success', 'Listing has been updated successfully!');
+
+    // Redirect the user back to the updated listing page
+    res.redirect(`/listing/${currentListing.id}`);
+});
 
 // Delete listing
 app.get('/deleteListing/:id', checkAuthenticated, (req, res) => {
