@@ -13,9 +13,10 @@ app.use(express.urlencoded({ extended: false }));
 // Session and flash messages
 app.use(
   session({
-    secret: 'sellspot-secret',
+    secret: 'secret',
     resave: false,
     saveUninitialized: false
+    
   })
 );
 app.use(flash());
@@ -33,14 +34,6 @@ const connection = mysql.createConnection({
     password: 'c237027@2026!',
     database: 'c237_027_t2sellspot'
 });
-
-
-// // Temporary local data.
-// // These arrays will be replaced with MySQL queries when the team database is ready.
-// let users = [];
-// let listings = [];
-// let nextUserId = 1;
-// let nextListingId = 1;
 
 // Multer setup for listing image upload
 const storage = multer.diskStorage({
