@@ -136,26 +136,16 @@ app.get('/', (req, res) => {
 });
 
 // LETTYAR [ REGISTRATION ]
-const validateRegistration = (req, res, next) => {
-    const {username,email,password,full_name,contact_number,address,role} = req.body;
-    if (
-        !username | !email | !password | !full_name | !contact_number | !address | !role) 
-        {
-          return res.status(400).send('All fields are required.');
-        }
+function validateRegistration(req, res, next) {
+    const { email, password, full_name, role } = req.body;
 
-    if (password.length < 6) {
-        req.flash(
-            'error',
-            'Password should be at least 8 characters long'
-        );
-
+    if (!email || !password || !full_name) {
+        req.flash('error', 'All fields are required.');
         req.flash('formData', req.body);
         return res.redirect('/register');
     }
-
     next();
-};
+}
 
 // mag
 // Display all marketplace items
@@ -212,8 +202,8 @@ app.get('/register', (req, res) => {
 
 // Create a local account
 app.post('/register', validateRegistration, (req, res) => {
-    const { email, password, full_name, role } = req.body;
-
+    const { email, password, full_name} = req.body;
+    const role = 'user';
     const checkSql = 'SELECT * FROM users WHERE email = ?';
 
     connection.query(checkSql, [email], (checkError, checkResults) => {
@@ -246,25 +236,43 @@ app.get('/login', (req, res) => {
   res.render('login');
 });
 
-// Log in using temporary local account data
+// LETTYAR [ LOGIN ]
 app.post('/login', (req, res) => {
-  const { email, password } = req.body;
-  const user = users.find((item) => item.email === email && item.password === password);
+    const { email, password } = req.body;
 
-  if (!user) {
-    req.flash('error', 'Email/login or password is incorrect.');
-    return res.redirect('/login');
-  }
+    if (!email || !password) {
+        req.flash('error', 'Email and password are required.');
+        return res.redirect('/login');
+    }
 
-  req.session.user = {
-    id: user.id,
-    name: user.name,
-    email: user.email,
-    role: user.role
-  };
+    const sql = `
+        SELECT user_id, email, full_name, role, rating
+        FROM users
+        WHERE email = ? AND password = SHA2(?, 256)
+    `;
 
-  req.flash('success', 'Login successful.');
-  res.redirect('/');
+    connection.query(sql, [email, password], (err, results) => {
+        if (err) {
+            throw err;
+        }
+
+        if (results.length === 0) {
+            req.flash('error', 'Email or password is incorrect.');
+            return res.redirect('/login');
+        }
+
+        const user = results[0];
+
+        req.session.user = {
+            id: user.user_id,
+            name: user.full_name,
+            email: user.email,
+            role: user.role
+        };
+
+        req.flash('success', 'Login successful.');
+        res.redirect('/');
+    });
 });
 
 // Log out
