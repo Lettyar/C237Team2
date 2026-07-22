@@ -8,16 +8,16 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <link rel="stylesheet" href="/style.css">
 </head>
+
 <body>
   <nav class="navbar navbar-expand-sm bg-dark navbar-dark">
     <div class="container">
-      <a class="navbar-brand" href="/">SellSpot</a>
+      <a class="navbar-brand" href="/"><h3>SellSpot</h3></a>
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar">
         <span class="navbar-toggler-icon"></span>
       </button>
       <div class="collapse navbar-collapse" id="mainNavbar">
         <ul class="navbar-nav me-auto">
-          <li class="nav-item"><a class="nav-link active" href="/">Home</a></li>
           <% if (currentUser) { %>
             <li class="nav-item"><a class="nav-link" href="/addListing">Add Listing</a></li>
             <li class="nav-item"><a class="nav-link" href="/myListings"><%= currentUser.role === 'admin' ? 'Manage Listings' : 'My Listings' %></a></li>
@@ -28,13 +28,43 @@
             <li class="nav-item"><span class="nav-link text-white"><%= currentUser.name %> (<%= currentUser.role %>)</span></li>
             <li class="nav-item"><a class="nav-link" href="/logout">Logout</a></li>
           <% } else { %>
-            <li class="nav-item"><a class="nav-link" href="/register">Create Account</a></li>
+            <li class="nav-item"><a class="nav-link" href="/register">Register</a></li>
             <li class="nav-item"><a class="nav-link" href="/login">Login</a></li>
           <% } %>
         </ul>
       </div>
     </div>
   </nav>
+
+<div class="container">
+  <div id="myCarousel" class="carousel slide" data-bs-ride="carousel" data-bs-interval="5000">
+    <div class="carousel-indicators">
+      <button type="button" data-bs-target="#myCarousel" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Slide 1"></button>
+      <button type="button" data-bs-target="#myCarousel" data-bs-slide-to="1" aria-label="Slide 2"></button>
+    </div>
+
+    <div class="carousel-inner">
+      <div class="carousel-item active">
+        <div class="alert-slide alert-red">
+          <h2>Welcome to SellSpot</h2>
+          <p>
+           Find affordable items or create a listing for something you no longer need.
+          </p>
+        </div>
+      </div>
+
+      <div class="carousel-item">
+        <div class="alert-slide alert-orange">
+          <h2>Beware of Scams</h2>
+          <p>
+            SellSpot Employees will never ask for payment. 
+          </p>
+        </div>
+      </div>
+      </div>
+    </div>
+  </div>
+</div>
 
   <div class="container mt-4">
 
@@ -107,8 +137,6 @@
       </div>
     <% } %>
   </div>
-
-  <footer class="text-center text-muted py-4 mt-5">SellSpot C237 CA2 Local Practice Version</footer>
 </body>
 </html>
 
