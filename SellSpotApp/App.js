@@ -2,8 +2,7 @@ const express = require('express');
 const session = require('express-session');
 const flash = require('connect-flash');
 const multer = require('multer');
-const mysql = require('mysql2')
-
+const mysql = require('mysql2');
 const app = express();
 
 // App setup
@@ -20,7 +19,6 @@ app.use(
   })
 );
 app.use(flash());
-
 
 app.use((req, res, next) => {
   res.locals.currentUser = req.session.user || null;
