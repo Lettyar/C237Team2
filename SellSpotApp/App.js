@@ -46,7 +46,15 @@ const storage = multer.diskStorage({
   }
 });
 
-const upload = multer({ storage: storage });
+// Keep the existing disk uploader for other teammates' routes
+const upload = multer({
+  storage: storage
+});
+
+// Use memory storage only for the Add Listing feature
+const addListingUpload = multer({
+  storage: multer.memoryStorage()
+});
 
 // Check whether a user is logged in
 function checkAuthenticated(req, res, next) {
@@ -287,11 +295,11 @@ app.get('/addListing', checkAuthenticated, (req, res) => {
   res.render('addListing');
 });
 
-// Add new listing to MySQL database
+// Add new listing and image to MySQL
 app.post(
   '/addListing',
   checkAuthenticated,
-  upload.single('image'),
+  addListingUpload.single('image'),
   (req, res) => {
     const {
       title,
@@ -301,7 +309,8 @@ app.post(
       condition
     } = req.body;
 
-    const image = req.file ? req.file.filename : '';
+    const imageData = req.file ? req.file.buffer : null;
+    const imageType = req.file ? req.file.mimetype : null;
 
     const sql = `
       INSERT INTO items
@@ -310,11 +319,12 @@ app.post(
         description,
         price,
         condition_status,
-        image_url,
+        image_data,
+        image_type,
         category_id,
         created_by
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const values = [
@@ -322,7 +332,8 @@ app.post(
       description,
       price,
       condition,
-      image,
+      imageData,
+      imageType,
       category,
       req.session.user.id
     ];
@@ -339,6 +350,34 @@ app.post(
     });
   }
 );
+
+// Display an item image stored in MySQL
+app.get('/itemImage/:id', (req, res) => {
+  const itemId = req.params.id;
+
+  const sql = `
+    SELECT image_data, image_type
+    FROM items
+    WHERE item_id = ?
+  `;
+
+  connection.query(sql, [itemId], (error, results) => {
+    if (error) {
+      console.error('Error retrieving image:', error);
+      return res.status(500).send('Database error');
+    }
+
+    if (
+      results.length === 0 ||
+      !results[0].image_data
+    ) {
+      return res.status(404).send('Image not found');
+    }
+
+    res.set('Content-Type', results[0].image_type);
+    return res.send(results[0].image_data);
+  });
+});
 
 // Display listings managed by the current user
 app.get('/myListings', checkAuthenticated, (req, res) => {
@@ -451,4 +490,3 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`SellSpot started on http://localhost:${PORT}`);
 });
-
