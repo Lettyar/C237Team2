@@ -135,6 +135,28 @@ app.get('/', (req, res) => {
   });
 });
 
+// LETTYAR [ REGISTRATION ]
+const validateRegistration = (req, res, next) => {
+    const {username,email,password,full_name,contact_number,address,role} = req.body;
+    if (
+        !username | !email | !password | !full_name | !contact_number | !address | !role) 
+        {
+          return res.status(400).send('All fields are required.');
+        }
+
+    if (password.length < 6) {
+        req.flash(
+            'error',
+            'Password should be at least 8 characters long'
+        );
+
+        req.flash('formData', req.body);
+        return res.redirect('/register');
+    }
+
+    next();
+};
+
 // mag
 // Display all marketplace items
 app.get('/item', (req, res) => {
@@ -182,39 +204,41 @@ app.get('/listing/:id', (req, res) => {
 
 // Display registration form
 app.get('/register', (req, res) => {
-  res.render('register');
+    res.render('register', {
+        messages: req.flash('error'),
+        formData: req.flash('formData')[0] || {}
+    });
 });
 
 // Create a local account
-app.post('/register', (req, res) => {
-  const { name, email, password, role } = req.body;
-  const existingUser = users.find((user) => user.email === email);
+app.post('/register', validateRegistration, (req, res) => {
+    const { email, password, full_name, role } = req.body;
 
-  if (existingUser) {
-    req.flash('error', 'This email or login name is already used.');
-    return res.redirect('/register');
-  }
+    const checkSql = 'SELECT * FROM users WHERE email = ?';
 
-  const newUser = {
-    id: nextUserId,
-    name: name,
-    email: email,
-    password: password,
-    role: role === 'admin' ? 'admin' : 'user'
-  };
+    connection.query(checkSql, [email], (checkError, checkResults) => {
+        if (checkError) {
+            throw checkError;
+        }
 
-  users.push(newUser);
-  nextUserId++;
+        if (checkResults.length > 0) {
+            req.flash('error', 'Email already exists.');
+            req.flash('formData', req.body);
+            return res.redirect('/register');
+        }
 
-  req.session.user = {
-    id: newUser.id,
-    name: newUser.name,
-    email: newUser.email,
-    role: newUser.role
-  };
+        const sql = 'INSERT INTO users (email, password, full_name, role, rating) VALUES (?, SHA2(?, 256), ?, ?, ?)';
 
-  req.flash('success', 'Account created successfully.');
-  res.redirect('/');
+        connection.query(sql, [email, password, full_name, role, 0], (err, result) => {
+            if (err) {
+                throw err;
+            }
+
+            console.log(result);
+            req.flash('success', 'Registration successful! Please log in.');
+            res.redirect('/login');
+        });
+    });
 });
 
 // Display login form

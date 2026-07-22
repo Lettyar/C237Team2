@@ -26,10 +26,10 @@
         <ul class="navbar-nav">
           <% if (currentUser) { %>
             <li class="nav-item"><span class="nav-link text-white"><%= currentUser.name %> (<%= currentUser.role %>)</span></li>
-            <li class="nav-item"><a class="nav-link" href="/logout">Logout</a></li>
+            <li class="nav-item"><a class="btn btn-outline-light" href="/logout">Logout</a></li>
           <% } else { %>
-            <li class="nav-item"><a class="nav-link" href="/register">Register</a></li>
-            <li class="nav-item"><a class="nav-link" href="/login">Login</a></li>
+            <li class="nav-item"><a class="btn btn-outline-light" href="/register">Register</a></li>
+            <li class="nav-item"><a class="btn btn-outline-light" href="/login">Login</a></li>
           <% } %>
         </ul>
       </div>
@@ -45,7 +45,7 @@
 
     <div class="carousel-inner">
       <div class="carousel-item active">
-        <div class="alert-slide alert-red">
+        <div class="alert-slide alert-orange">
           <h2>Welcome to SellSpot</h2>
           <p>
            Find affordable items or create a listing for something you no longer need.
@@ -54,7 +54,7 @@
       </div>
 
       <div class="carousel-item">
-        <div class="alert-slide alert-orange">
+        <div class="alert-slide alert-red">
           <h2>Beware of Scams</h2>
           <p>
             SellSpot Employees will never ask for payment. 
