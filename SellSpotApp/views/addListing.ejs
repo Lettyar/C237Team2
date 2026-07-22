@@ -26,7 +26,10 @@
         SellSpot
       </a>
 
-      <a class="btn btn-outline-light" href="/">
+      <a
+        class="btn btn-outline-light"
+        href="/"
+      >
         Back to Marketplace
       </a>
 
@@ -50,9 +53,11 @@
             </p>
 
             <% if (error && error.length > 0) { %>
+
               <div class="alert alert-danger">
                 <%= error[0] %>
               </div>
+
             <% } %>
 
             <form
@@ -62,7 +67,11 @@
             >
 
               <div class="mb-3">
-                <label for="title" class="form-label">
+
+                <label
+                  for="title"
+                  class="form-label"
+                >
                   Item Title
                 </label>
 
@@ -75,10 +84,15 @@
                   placeholder="Example: Wooden Study Table"
                   required
                 >
+
               </div>
 
               <div class="mb-3">
-                <label for="description" class="form-label">
+
+                <label
+                  for="description"
+                  class="form-label"
+                >
                   Description
                 </label>
 
@@ -89,16 +103,22 @@
                   rows="4"
                   placeholder="Describe the item"
                 ></textarea>
+
               </div>
 
               <div class="row">
 
                 <div class="col-md-6 mb-3">
-                  <label for="price" class="form-label">
+
+                  <label
+                    for="price"
+                    class="form-label"
+                  >
                     Price
                   </label>
 
                   <div class="input-group">
+
                     <span class="input-group-text">
                       $
                     </span>
@@ -113,11 +133,17 @@
                       placeholder="0.00"
                       required
                     >
+
                   </div>
+
                 </div>
 
                 <div class="col-md-6 mb-3">
-                  <label for="category" class="form-label">
+
+                  <label
+                    for="category"
+                    class="form-label"
+                  >
                     Category
                   </label>
 
@@ -127,6 +153,7 @@
                     name="category"
                     required
                   >
+
                     <option value="">
                       Select category
                     </option>
@@ -154,13 +181,19 @@
                     <option value="Others">
                       Others
                     </option>
+
                   </select>
+
                 </div>
 
               </div>
 
               <div class="mb-3">
-                <label for="condition" class="form-label">
+
+                <label
+                  for="condition"
+                  class="form-label"
+                >
                   Condition
                 </label>
 
@@ -170,6 +203,7 @@
                   name="condition"
                   required
                 >
+
                   <option value="">
                     Select condition
                   </option>
@@ -193,11 +227,17 @@
                   <option value="worn">
                     Worn
                   </option>
+
                 </select>
+
               </div>
 
               <div class="mb-4">
-                <label for="image" class="form-label">
+
+                <label
+                  for="image"
+                  class="form-label"
+                >
                   Item Image
                 </label>
 
@@ -212,6 +252,7 @@
                 <div class="form-text">
                   Uploading an image is optional.
                 </div>
+
               </div>
 
               <div class="d-flex gap-2">
