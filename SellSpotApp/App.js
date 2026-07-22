@@ -268,7 +268,6 @@ app.get('/myListings', checkAuthenticated, (req, res) => {
 });
 
 // Display edit listing form
-// Display edit listing form
 app.get('/editListing/:id', checkAuthenticated, (req, res) => {
   const listingId = Number.parseInt(req.params.id, 10);
   const listing = listings.find((item) => item.id === listingId);
