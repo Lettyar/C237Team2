@@ -163,35 +163,57 @@ app.get('/logout', (req, res) => {
   });
 });
 
-// Display add listing form
+// Display add listing form - Lin Yi
 app.get('/addListing', checkAuthenticated, (req, res) => {
   res.render('addListing');
 });
 
-// Add new listing to temporary local data
-app.post('/addListing', checkAuthenticated, upload.single('image'), (req, res) => {
-  const { title, description, price, category, condition, location } = req.body;
-  const image = req.file ? req.file.filename : '';
+// Add new listing to MySQL database - Lin Yi
+app.post(
+  '/addListing',
+  checkAuthenticated,
+  upload.single('image'),
+  (req, res) => {
+    const {
+      title,
+      description,
+      price,
+      category,
+      condition,
+      location
+    } = req.body;
 
-  const newListing = {
-    id: nextListingId,
-    title: title,
-    description: description,
-    price: price,
-    category: category,
-    condition: condition,
-    location: location,
-    image: image,
-    sellerId: req.session.user.id,
-    sellerName: req.session.user.name
-  };
+    const image = req.file ? req.file.filename : '';
 
-  listings.push(newListing);
-  nextListingId++;
+    const sql = `
+      INSERT INTO listings
+      (title, description, price, category, \`condition\`, location, image, sellerId)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `;
 
-  req.flash('success', 'Listing added successfully.');
-  res.redirect('/');
-});
+    const values = [
+      title,
+      description,
+      price,
+      category,
+      condition,
+      location,
+      image,
+      req.session.user.id
+    ];
+
+    connection.query(sql, values, (error, result) => {
+      if (error) {
+        console.error('Error adding listing:', error);
+        req.flash('error', 'Unable to add listing.');
+        return res.redirect('/addListing');
+      }
+
+      req.flash('success', 'Listing added successfully.');
+      return res.redirect('/items');
+    });
+  }
+);
 
 // Display listings managed by the current user
 app.get('/myListings', checkAuthenticated, (req, res) => {
@@ -206,7 +228,7 @@ app.get('/myListings', checkAuthenticated, (req, res) => {
   res.render('myListings', { listings: results });
 });
 
-// Display edit listing form
+
 // Display edit listing form
 app.get('/editListing/:id', checkAuthenticated, (req, res) => {
   const listingId = Number.parseInt(req.params.id, 10);
