@@ -3,7 +3,6 @@ const session = require('express-session');
 const flash = require('connect-flash');
 const multer = require('multer');
 const mysql = require('mysql2');
-
 const app = express();
 
 // App setup
@@ -14,9 +13,10 @@ app.use(express.urlencoded({ extended: false }));
 // Session and flash messages
 app.use(
   session({
-    secret: 'sellspot-secret',
+    secret: 'secret',
     resave: false,
     saveUninitialized: false
+    
   })
 );
 app.use(flash());
@@ -34,14 +34,6 @@ const connection = mysql.createConnection({
     password: 'c237027@2026!',
     database: 'c237_027_t2sellspot'
 });
-
-
-// // Temporary local data.
-// // These arrays will be replaced with MySQL queries when the team database is ready.
-// let users = [];
-// let listings = [];
-// let nextUserId = 1;
-// let nextListingId = 1;
 
 // Multer setup for listing image upload
 const storage = multer.diskStorage({
@@ -71,15 +63,110 @@ function canManageListing(user, listing) {
   return user.role === 'admin' || user.id === listing.sellerId;
 }
 
-// Display all marketplace listings
-// mag
-app.get('/items', (req, res) => {
-  res.render('item', {
-    items: listings
+// Display all listings with simple search and category filtering
+// Eant: search, filter and organise marketplace items
+app.get('/', (req, res) => {
+  const search = (req.query.search || '').trim();
+  const category = req.query.category || '';
+  const condition = req.query.condition || '';
+  const sort = req.query.sort || 'newest';
+
+  let sql = `
+    SELECT
+      item_id AS id,
+      item_name AS title,
+      description,
+      price,
+      condition_status AS \`condition\`,
+      image_url AS image,
+      category_id AS category,
+      status,
+      created_at,
+      '' AS location
+    FROM items
+    WHERE status != 'unlisted'
+  `;
+
+  const values = [];
+
+  // Search the item name and description
+  if (search) {
+    sql += ` AND (item_name LIKE ? OR description LIKE ?)`;
+    values.push(`%${search}%`, `%${search}%`);
+  }
+
+  // Filter items by category
+  if (category) {
+    sql += ` AND category_id = ?`;
+    values.push(category);
+  }
+
+  // Filter items by condition
+  if (condition) {
+    sql += ` AND condition_status = ?`;
+    values.push(condition);
+  }
+
+  // Only allow these approved sorting options
+  const sortOptions = {
+    newest: 'created_at DESC',
+    oldest: 'created_at ASC',
+    priceLow: 'price ASC',
+    priceHigh: 'price DESC',
+    nameAZ: 'item_name ASC'
+  };
+
+  sql += ` ORDER BY ${sortOptions[sort] || sortOptions.newest}`;
+
+  connection.query(sql, values, (error, results) => {
+    if (error) {
+      console.error('Search and filter error:', error);
+      return res.status(500).send('Database error');
+    }
+
+    res.render('index', {
+      listings: results,
+      search: search,
+      category: category,
+      condition: condition,
+      sort: sort
+    });
+
   });
 });
 
-// Display all listings with simple search and category filtering
+// mag
+// Display all marketplace items
+app.get('/item', (req, res) => {
+  const sql = `
+    SELECT
+      item_id AS id,
+      item_name AS title,
+      description,
+      price,
+      condition_status AS \`condition\`,
+      image_url AS image,
+      category_id AS category,
+      status,
+      created_at
+    FROM items
+    WHERE status != 'unlisted'
+    ORDER BY created_at DESC
+  `;
+
+  connection.query(sql, (error, results) => {
+    if (error) {
+      console.error('Error retrieving items:', error);
+      return res.status(500).send('Database error');
+    }
+
+    res.render('item', {
+      items: results
+    });
+  });
+});
+
+
 // eant 
 // Display one listing
 app.get('/listing/:id', (req, res) => {
@@ -163,57 +250,35 @@ app.get('/logout', (req, res) => {
   });
 });
 
-// Display add listing form - Lin Yi
+// Display add listing form
 app.get('/addListing', checkAuthenticated, (req, res) => {
   res.render('addListing');
 });
 
-// Add new listing to MySQL database - Lin Yi
-app.post(
-  '/addListing',
-  checkAuthenticated,
-  upload.single('image'),
-  (req, res) => {
-    const {
-      title,
-      description,
-      price,
-      category,
-      condition,
-      location
-    } = req.body;
+// Add new listing to temporary local data
+app.post('/addListing', checkAuthenticated, upload.single('image'), (req, res) => {
+  const { title, description, price, category, condition, location } = req.body;
+  const image = req.file ? req.file.filename : '';
 
-    const image = req.file ? req.file.filename : '';
+  const newListing = {
+    id: nextListingId,
+    title: title,
+    description: description,
+    price: price,
+    category: category,
+    condition: condition,
+    location: location,
+    image: image,
+    sellerId: req.session.user.id,
+    sellerName: req.session.user.name
+  };
 
-    const sql = `
-      INSERT INTO listings
-      (title, description, price, category, \`condition\`, location, image, sellerId)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `;
+  listings.push(newListing);
+  nextListingId++;
 
-    const values = [
-      title,
-      description,
-      price,
-      category,
-      condition,
-      location,
-      image,
-      req.session.user.id
-    ];
-
-    connection.query(sql, values, (error, result) => {
-      if (error) {
-        console.error('Error adding listing:', error);
-        req.flash('error', 'Unable to add listing.');
-        return res.redirect('/addListing');
-      }
-
-      req.flash('success', 'Listing added successfully.');
-      return res.redirect('/items');
-    });
-  }
-);
+  req.flash('success', 'Listing added successfully.');
+  res.redirect('/');
+});
 
 // Display listings managed by the current user
 app.get('/myListings', checkAuthenticated, (req, res) => {
@@ -229,65 +294,73 @@ app.get('/myListings', checkAuthenticated, (req, res) => {
 });
 
 
-// Display edit listing form
+// Show Edit Listing Page (GET) Gurjeet
 app.get('/editListing/:id', checkAuthenticated, (req, res) => {
-  const listingId = Number.parseInt(req.params.id, 10);
-  const listing = listings.find((item) => item.id === listingId);
 
-  if (!listing) {
-    return res.status(404).send('Listing not found');
-  }
+    // Get the listing ID from the URL and convert it into a number
+    const id = parseInt(req.params.id);
 
-  if (!canManageListing(req.session.user, listing)) {
-    req.flash('error', 'You cannot edit this listing.');
-    return res.redirect('/');
-  }
+    // Search the listings array for the listing with the matching ID
+    const currentListing = listings.find(listing => listing.id === id);
 
-  res.render('editListing', { listing });
+    // If no listing is found, return a 404 error
+    if (!currentListing) {
+        return res.status(404).send('Listing not found.');
+    }
+
+    // Check whether the logged-in user is allowed to edit this listing
+    if (!canManageListing(req.session.user, currentListing)) {
+        req.flash('error', 'You do not have permission to edit this listing.');
+        return res.redirect('/');
+    }
+
+    // Open the editListing.ejs page and send the listing data to it
+    res.render('editListing', {
+        listing: currentListing
+    });
 });
 
-// Update listing
-app.post(
-  '/editListing/:id',
-  checkAuthenticated,
-  upload.single('image'),
-  (req, res) => {
-    const listingId = Number.parseInt(req.params.id, 10);
-    const listing = listings.find((item) => item.id === listingId);
 
-    if (!listing) {
-      return res.status(404).send('Listing not found');
+
+// Update Listing (POST) Gurjeet
+app.post('/editListing/:id', checkAuthenticated, upload.single('image'), (req, res) => {
+
+    // Get the listing ID from the URL
+    const id = parseInt(req.params.id);
+
+    // Find the listing that the user wants to edit
+    const currentListing = listings.find(listing => listing.id === id);
+
+    // If the listing doesn't exist, show an error
+    if (!currentListing) {
+        return res.status(404).send('Listing not found.');
     }
 
-    if (!canManageListing(req.session.user, listing)) {
-      req.flash('error', 'You cannot edit this listing.');
-      return res.redirect('/');
+    // Check if the user has permission to edit this listing
+    if (!canManageListing(req.session.user, currentListing)) {
+        req.flash('error', 'You do not have permission to edit this listing.');
+        return res.redirect('/');
     }
 
-    const {
-      title,
-      description,
-      price,
-      category,
-      condition,
-      location
-    } = req.body;
+    // Update the listing details using the values submitted from the form
+    currentListing.title = req.body.title;
+    currentListing.description = req.body.description;
+    currentListing.price = req.body.price;
+    currentListing.category = req.body.category;
+    currentListing.condition = req.body.condition;
+    currentListing.location = req.body.location;
 
-    listing.title = title;
-    listing.description = description;
-    listing.price = price;
-    listing.category = category;
-    listing.condition = condition;
-    listing.location = location;
-
+    // If the user uploads a new image, replace the old image filename
     if (req.file) {
-      listing.image = req.file.filename;
+        currentListing.image = req.file.filename;
     }
 
-    req.flash('success', 'Listing updated successfully.');
-    return res.redirect('/listing/' + listing.id);
-  }
-);
+    // Store a success message to display after redirecting
+    req.flash('success', 'Listing has been updated successfully!');
+
+    // Redirect the user back to the updated listing page
+    res.redirect(`/listing/${currentListing.id}`);
+});
 
 // Delete listing
 app.get('/deleteListing/:id', checkAuthenticated, (req, res) => {
