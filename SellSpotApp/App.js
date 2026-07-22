@@ -207,12 +207,13 @@ app.get('/myListings', checkAuthenticated, (req, res) => {
 });
 
 // Display edit listing form
-// gurjeet editing 
+// Display edit listing form
+app.get('/editListing/:id', checkAuthenticated, (req, res) => {
+  const listingId = Number.parseInt(req.params.id, 10);
+  const listing = listings.find((item) => item.id === listingId);
 
-// Update listing in temporary local data
-// gurjeet editing 
   if (!listing) {
-    return res.send('Listing not found');
+    return res.status(404).send('Listing not found');
   }
 
   if (!canManageListing(req.session.user, listing)) {
@@ -220,25 +221,75 @@ app.get('/myListings', checkAuthenticated, (req, res) => {
     return res.redirect('/');
   }
 
-  const { title, description, price, category, condition, location } = req.body;
+  res.render('editListing', { listing });
+});
 
-  listing.title = title;
-  listing.description = description;
-  listing.price = price;
-  listing.category = category;
-  listing.condition = condition;
-  listing.location = location;
+// Update listing
+app.post(
+  '/editListing/:id',
+  checkAuthenticated,
+  upload.single('image'),
+  (req, res) => {
+    const listingId = Number.parseInt(req.params.id, 10);
+    const listing = listings.find((item) => item.id === listingId);
 
-  if (req.file) {
-    listing.image = req.file.filename;
+    if (!listing) {
+      return res.status(404).send('Listing not found');
+    }
+
+    if (!canManageListing(req.session.user, listing)) {
+      req.flash('error', 'You cannot edit this listing.');
+      return res.redirect('/');
+    }
+
+    const {
+      title,
+      description,
+      price,
+      category,
+      condition,
+      location
+    } = req.body;
+
+    listing.title = title;
+    listing.description = description;
+    listing.price = price;
+    listing.category = category;
+    listing.condition = condition;
+    listing.location = location;
+
+    if (req.file) {
+      listing.image = req.file.filename;
+    }
+
+    req.flash('success', 'Listing updated successfully.');
+    return res.redirect('/listing/' + listing.id);
+  }
+);
+
+// Delete listing
+app.get('/deleteListing/:id', checkAuthenticated, (req, res) => {
+  const listingId = Number.parseInt(req.params.id, 10);
+  const listingIndex = listings.findIndex(
+    (item) => item.id === listingId
+  );
+
+  if (listingIndex === -1) {
+    return res.status(404).send('Listing not found');
   }
 
-  req.flash('success', 'Listing updated successfully.');
-  res.redirect('/listing/' + listing.id);
-;
+  const listing = listings[listingIndex];
 
-// Delete listing from temporary local data
-// otaku delete 
+  if (!canManageListing(req.session.user, listing)) {
+    req.flash('error', 'You cannot delete this listing.');
+    return res.redirect('/');
+  }
+
+  listings.splice(listingIndex, 1);
+
+  req.flash('success', 'Listing deleted successfully.');
+  return res.redirect('/myListings');
+});
 
 // Start server
 const PORT = process.env.PORT || 3000;
