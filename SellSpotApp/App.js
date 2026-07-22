@@ -2,7 +2,7 @@ const express = require('express');
 const session = require('express-session');
 const flash = require('connect-flash');
 const multer = require('multer');
-//eant phone
+
 const app = express();
 
 // App setup
