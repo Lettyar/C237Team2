@@ -138,8 +138,41 @@ app.get('/', (req, res) => {
       condition: condition,
       sort: sort
     });
+
   });
 });
+
+// mag
+// Display all marketplace items
+app.get('/item', (req, res) => {
+  const sql = `
+    SELECT
+      item_id AS id,
+      item_name AS title,
+      description,
+      price,
+      condition_status AS \`condition\`,
+      image_url AS image,
+      category_id AS category,
+      status,
+      created_at
+    FROM items
+    WHERE status != 'unlisted'
+    ORDER BY created_at DESC
+  `;
+
+  connection.query(sql, (error, results) => {
+    if (error) {
+      console.error('Error retrieving items:', error);
+      return res.status(500).send('Database error');
+    }
+
+    res.render('item', {
+      items: results
+    });
+  });
+});
+
 
 // eant 
 // Display one listing
