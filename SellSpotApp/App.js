@@ -3,6 +3,7 @@ const session = require('express-session');
 const flash = require('connect-flash');
 const multer = require('multer');
 const mysql = require('mysql2');
+
 const app = express();
 
 // App setup
@@ -70,77 +71,15 @@ function canManageListing(user, listing) {
   return user.role === 'admin' || user.id === listing.sellerId;
 }
 
-// Display all listings with simple search and category filtering
-// Eant: search, filter and organise marketplace items
-app.get('/', (req, res) => {
-  const search = (req.query.search || '').trim();
-  const category = req.query.category || '';
-  const condition = req.query.condition || '';
-  const sort = req.query.sort || 'newest';
-
-  let sql = `
-    SELECT
-      item_id AS id,
-      item_name AS title,
-      description,
-      price,
-      condition_status AS \`condition\`,
-      image_url AS image,
-      category_id AS category,
-      status,
-      created_at,
-      '' AS location
-    FROM items
-    WHERE status != 'unlisted'
-  `;
-
-  const values = [];
-
-  // Search the item name and description
-  if (search) {
-    sql += ` AND (item_name LIKE ? OR description LIKE ?)`;
-    values.push(`%${search}%`, `%${search}%`);
-  }
-
-  // Filter items by category
-  if (category) {
-    sql += ` AND category_id = ?`;
-    values.push(category);
-  }
-
-  // Filter items by condition
-  if (condition) {
-    sql += ` AND condition_status = ?`;
-    values.push(condition);
-  }
-
-  // Only allow these approved sorting options
-  const sortOptions = {
-    newest: 'created_at DESC',
-    oldest: 'created_at ASC',
-    priceLow: 'price ASC',
-    priceHigh: 'price DESC',
-    nameAZ: 'item_name ASC'
-  };
-
-  sql += ` ORDER BY ${sortOptions[sort] || sortOptions.newest}`;
-
-  connection.query(sql, values, (error, results) => {
-    if (error) {
-      console.error('Search and filter error:', error);
-      return res.status(500).send('Database error');
-    }
-
-    res.render('index', {
-      listings: results,
-      search: search,
-      category: category,
-      condition: condition,
-      sort: sort
-    });
+// Display all marketplace listings
+// mag
+app.get('/items', (req, res) => {
+  res.render('item', {
+    items: listings
   });
 });
 
+// Display all listings with simple search and category filtering
 // eant 
 // Display one listing
 app.get('/listing/:id', (req, res) => {
