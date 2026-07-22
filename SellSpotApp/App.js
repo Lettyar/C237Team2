@@ -66,10 +66,30 @@ function checkAuthenticated(req, res, next) {
   res.redirect('/login');
 }
 
+// LETTYAR [Check if user is admin]
+function checkAdmin(req, res, next) {
+  if (!req.session.user) {
+    req.flash('error', 'Please log in first.');
+    return res.redirect('/login');
+  }
+
+  if (req.session.user.role !== 'admin') {
+    req.flash('error', 'You do not have permission to access the admin board.');
+    return res.redirect('/');
+  }
+
+  next();
+}
+
 // Admins can manage all listings. Users can manage only their own listings.
 function canManageListing(user, listing) {
   return user.role === 'admin' || user.id === listing.sellerId;
 }
+
+// LETTYAR [Route to Admin Board]
+app.get('/adminboard', checkAdmin, (req, res) => {
+  res.render('adminboard');
+});
 
 // Display all listings with simple search and category filtering
 // Eant: search, filter and organise marketplace items
@@ -114,6 +134,7 @@ app.get('/', (req, res) => {
     sql += ` AND condition_status = ?`;
     values.push(condition);
   }
+  
 
   // Only allow these approved sorting options
   const sortOptions = {
