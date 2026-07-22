@@ -5,6 +5,7 @@ const multer = require('multer');
 const mysql = require('mysql2');
 const app = express();
 
+
 // App setup
 app.set('view engine', 'ejs');
 app.use(express.static('public'));
