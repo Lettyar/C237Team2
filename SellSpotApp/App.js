@@ -226,7 +226,7 @@ app.get('/myListings', checkAuthenticated, (req, res) => {
 
   req.flash('success', 'Listing updated successfully.');
   res.redirect('/listing/' + listing.id);
-});
+;
 
 // Delete listing from temporary local data
 // otaku delete 
