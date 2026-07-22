@@ -3,8 +3,8 @@ const session = require('express-session');
 const flash = require('connect-flash');
 const multer = require('multer');
 const mysql = require('mysql2');
-const app = express();
 
+const app = express();
 
 // App setup
 app.set('view engine', 'ejs');
