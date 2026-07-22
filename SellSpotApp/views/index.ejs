@@ -25,7 +25,7 @@
         </ul>
         <ul class="navbar-nav">
           <% if (currentUser) { %>
-            <li class="nav-item"><span class="nav-link text-white"><%= currentUser.name %> (<%= currentUser.role %>)</span></li>
+            <li class="nav-item"><span class="nav-link text-white"><%= currentUser.name %></span></li>
             <li class="nav-item"><a class="btn btn-outline-light" href="/logout">Logout</a></li>
           <% } else { %>
             <li class="nav-item"><a class="btn btn-outline-light" href="/register">Register</a></li>
@@ -46,7 +46,7 @@
     <div class="carousel-inner">
       <div class="carousel-item active">
         <div class="alert-slide alert-orange">
-          <h2>Welcome to SellSpot</h2>
+          <h2>Welcome to SellSpot, <%= currentUser.name %> </h2>
           <p>
            Find affordable items or create a listing for something you no longer need.
           </p>
