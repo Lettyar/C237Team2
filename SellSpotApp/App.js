@@ -27,12 +27,20 @@ app.use((req, res, next) => {
   next();
 });
 
-// Temporary local data.
-// These arrays will be replaced with MySQL queries when the team database is ready.
-let users = [];
-let listings = [];
-let nextUserId = 1;
-let nextListingId = 1;
+const connection = mysql.createConnection({
+    host: 'c237-hannah-mysql.mysql.database.azure.com',
+    user: 'c237_027',
+    password: 'c237027@2026!',
+    database: 'c237_027_t2sellspot'
+});
+
+
+// // Temporary local data.
+// // These arrays will be replaced with MySQL queries when the team database is ready.
+// let users = [];
+// let listings = [];
+// let nextUserId = 1;
+// let nextListingId = 1;
 
 // Multer setup for listing image upload
 const storage = multer.diskStorage({
