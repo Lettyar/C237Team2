@@ -279,30 +279,58 @@ app.get('/addListing', checkAuthenticated, (req, res) => {
   res.render('addListing');
 });
 
-// Add new listing to temporary local data
-app.post('/addListing', checkAuthenticated, upload.single('image'), (req, res) => {
-  const { title, description, price, category, condition, location } = req.body;
-  const image = req.file ? req.file.filename : '';
+// Add new listing to MySQL database
+app.post(
+  '/addListing',
+  checkAuthenticated,
+  upload.single('image'),
+  (req, res) => {
+    const {
+      title,
+      description,
+      price,
+      category,
+      condition
+    } = req.body;
 
-  const newListing = {
-    id: nextListingId,
-    title: title,
-    description: description,
-    price: price,
-    category: category,
-    condition: condition,
-    location: location,
-    image: image,
-    sellerId: req.session.user.id,
-    sellerName: req.session.user.name
-  };
+    const image = req.file ? req.file.filename : '';
 
-  listings.push(newListing);
-  nextListingId++;
+    const sql = `
+      INSERT INTO items
+      (
+        item_name,
+        description,
+        price,
+        condition_status,
+        image_url,
+        category_id,
+        created_by
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `;
 
-  req.flash('success', 'Listing added successfully.');
-  res.redirect('/');
-});
+    const values = [
+      title,
+      description,
+      price,
+      condition,
+      image,
+      category,
+      req.session.user.id
+    ];
+
+    connection.query(sql, values, (error, result) => {
+      if (error) {
+        console.error('Error adding item:', error);
+        req.flash('error', 'Unable to add listing.');
+        return res.redirect('/addListing');
+      }
+
+      req.flash('success', 'Listing added successfully.');
+      return res.redirect('/');
+    });
+  }
+);
 
 // Display listings managed by the current user
 app.get('/myListings', checkAuthenticated, (req, res) => {
