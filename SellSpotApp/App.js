@@ -223,6 +223,14 @@ app.get('/listing/:id', (req, res) => {
   });
 });
 
+
+// Display registration form
+app.get('/register', (req, res) => {
+  res.render('register');
+});
+
+
+
 // Create a local account
 app.post('/register', validateRegistration, (req, res) => {
     const { email, password, full_name} = req.body;
