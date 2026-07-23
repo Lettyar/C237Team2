@@ -468,7 +468,6 @@ const sql = `
     users.full_name AS sellerName
   FROM items
   JOIN users ON items.created_by = users.user_id
-  WHERE items.item_id = ?
 `;
 
   connection.query(sql, [req.session.user.id], (error, results) => {
