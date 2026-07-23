@@ -97,3 +97,64 @@
             </a>
         </div>
     </div>
+
+
+<!-- Eant: filter users by role -->
+<div class="card shadow-sm mt-4">
+    <div class="card-body">
+
+        <form action="/adminboard" method="GET">
+
+            <div class="row g-3">
+
+                <div class="col-md-8">
+                    <label for="role" class="form-label">
+                        Filter users by role
+                    </label>
+
+                    <select
+                        class="form-select"
+                        id="role"
+                        name="role"
+                    >
+                        <option
+                            value=""
+                            <%= role === '' ? 'selected' : '' %>
+                        >
+                            All Roles
+                        </option>
+
+                        <option
+                            value="user"
+                            <%= role === 'user' ? 'selected' : '' %>
+                        >
+                            Regular Users
+                        </option>
+
+                        <option
+                            value="admin"
+                            <%= role === 'admin' ? 'selected' : '' %>
+                        >
+                            Administrators
+                        </option>
+                    </select>
+                </div>
+
+                <div class="col-md-2 d-grid align-items-end">
+                    <button type="submit" class="btn btn-primary">
+                        Apply Filter
+                    </button>
+                </div>
+
+                <div class="col-md-2 d-grid align-items-end">
+                    <a href="/adminboard" class="btn btn-outline-secondary">
+                        Clear
+                    </a>
+                </div>
+
+            </div>
+
+        </form>
+
+    </div>
+</div>
