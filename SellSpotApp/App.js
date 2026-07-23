@@ -574,12 +574,12 @@ app.get('/deleteListing/:id', checkAuthenticated, (req, res) => {
     if (err) {
       console.error('Database error:', err);
       req.flash('error', 'Database error occurred.');
-      return res.redirect('/myListings');
+      return res.redirect('/');
     }
 
     if (results.length === 0) {
       req.flash('error', 'Listing not found.');
-      return res.redirect('/myListings');
+      return res.redirect('/');
     }
 
     const listing = results[0];
@@ -587,7 +587,7 @@ app.get('/deleteListing/:id', checkAuthenticated, (req, res) => {
 
     if (currentUser.role !== 'admin' && currentUser.user_id !== listing.user_id) {
       req.flash('error', 'You do not have permission to delete this listing.');
-      return res.redirect('/myListings');
+      return res.redirect('/');
     }
 
     const deleteSql = 'DELETE FROM items WHERE item_id = ?';
@@ -596,11 +596,11 @@ app.get('/deleteListing/:id', checkAuthenticated, (req, res) => {
       if (err) {
         console.error('Delete error:', err);
         req.flash('error', 'Failed to delete listing.');
-        return res.redirect('/myListings');
+        return res.redirect('/');
       }
 
       req.flash('success', 'Listing deleted successfully.');
-      return res.redirect('/myListings');
+      return res.redirect('/');
     });
   });
 });
