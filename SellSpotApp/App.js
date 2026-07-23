@@ -144,9 +144,10 @@ app.get('/', (req, res) => {
     category_id AS category,
     location,
     status,
-    created_at
+     created_at,
+    users.full_name AS sellerName
   FROM items
-  WHERE status != 'unlisted'
+  JOIN users ON items.created_by = users.user_id
 `;
 
   const values = [];
