@@ -468,6 +468,8 @@ const sql = `
     users.full_name AS sellerName
   FROM items
   JOIN users ON items.created_by = users.user_id
+  // Show only listings created by the currently logged-in user
+  WHERE items.created_by = ?
 `;
 
   connection.query(sql, [req.session.user.id], (error, results) => {
