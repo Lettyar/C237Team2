@@ -86,9 +86,42 @@ function canManageListing(user, listing) {
   return user.role === 'admin' || user.id === listing.sellerId;
 }
 
-// LETTYAR [Route to Admin Board]
+// Eant: display users and filter them by role
 app.get('/adminboard', checkAdmin, (req, res) => {
-  res.render('adminboard');
+  const role = req.query.role || '';
+
+  const allowedRoles = ['user', 'admin'];
+
+  let sql = `
+    SELECT
+      user_id,
+      full_name,
+      email,
+      role,
+      rating
+    FROM users
+  `;
+
+  const values = [];
+
+  if (allowedRoles.includes(role)) {
+    sql += ` WHERE role = ?`;
+    values.push(role);
+  }
+
+  sql += ` ORDER BY full_name ASC`;
+
+  connection.query(sql, values, (error, results) => {
+    if (error) {
+      console.error('Error retrieving users:', error);
+      return res.status(500).send('Database error');
+    }
+
+    res.render('adminboard', {
+      users: results,
+      role: role
+    });
+  });
 });
 
 // Display all listings with simple search and category filtering
@@ -185,6 +218,7 @@ app.get('/listing/:id', (req, res) => {
 
   const sql = `
     SELECT
+<<<<<<< HEAD
       items.item_id AS id,
       items.item_name AS title,
       items.description,
@@ -198,19 +232,39 @@ app.get('/listing/:id', (req, res) => {
       items.created_by AS sellerId,
       items.created_at,
       users.full_name AS sellerName
+=======
+      item_id AS id,
+      item_name AS title,
+      description,
+      price,
+      condition_status AS \`condition\`,
+      image_url AS image,
+      (image_data IS NOT NULL) AS hasDatabaseImage,
+      category_id AS category,
+      status,
+      created_by AS sellerId,
+      created_at
+>>>>>>> dcc9f92adb6c1048c8244038147ec5f7df2950bd
     FROM items
-    JOIN users ON items.created_by = users.user_id
-    WHERE items.item_id = ?
+    WHERE item_id = ?
   `;
 
   connection.query(sql, [listingId], (error, results) => {
     if (error) {
-      console.error('Error retrieving listing:', error);
-      return res.status(500).send('Database error');
+      console.error(
+        'Error retrieving listing:',
+        error
+      );
+
+      return res
+        .status(500)
+        .send('Database error');
     }
 
     if (results.length === 0) {
-      return res.status(404).send('Listing not found');
+      return res
+        .status(404)
+        .send('Listing not found');
     }
 
     res.render('listing', {
@@ -607,7 +661,7 @@ app.get('/deleteListing/:id', checkAuthenticated, (req, res) => {
     const listing = results[0];
     const currentUser = req.session.user;
 
-    if (currentUser.role !== 'admin' && currentUser.user_id !== listing.created_by) {
+    if (currentUser.role !== 'admin' && currentUser.user_id !== listing.user_id) {
       req.flash('error', 'You do not have permission to delete this listing.');
       return res.redirect('/');
     }

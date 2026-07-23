@@ -66,13 +66,15 @@
 
         <ul class="navbar-nav">
 
-          <% if (currentUser) { %>
-
-            <li class="nav-item">
-              <span class="nav-link text-white">
-                <%= currentUser.name %>
-              </span>
-            </li>
+                <% if (currentUser) { %>
+                    <li class="nav-item">
+                        <span class="nav-link text-white">
+                            <%= currentUser.name %>
+                            <% if (currentUser.role === 'admin') { %>
+                                <span class="badge bg-danger ms-1">Admin</span>
+                            <% } %>
+                        </span>
+                    </li>
 
             <li class="nav-item">
               <a class="btn btn-outline-light" href="/logout">
