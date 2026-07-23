@@ -20,10 +20,34 @@
       </button>
       <div class="collapse navbar-collapse" id="mainNavbar">
         <ul class="navbar-nav me-auto">
-          <% if (currentUser) { %>
-            <li class="nav-item"><a class="nav-link" href="/addListing">Add Listing</a></li>
-            <li class="nav-item"><a class="nav-link" href="/myListings"><%= currentUser.role === 'admin' ? 'Manage Listings' : 'My Listings' %></a></li>
-          <% } %>
+<% if (currentUser) { %>
+
+  <li class="nav-item">
+    <a class="nav-link" href="/addListing">
+      Add Listing
+    </a>
+  </li>
+
+  <li class="nav-item">
+    <a class="nav-link" href="/myListings">
+      <%= currentUser.role === 'admin'
+        ? 'Manage Listings'
+        : 'My Listings'
+      %>
+    </a>
+  </li>
+
+  <% if (currentUser.role === 'admin') { %>
+
+    <li class="nav-item">
+      <a class="nav-link" href="/admin/users">
+        Admin Board
+      </a>
+    </li>
+
+  <% } %>
+
+<% } %>
         </ul>
         <ul class="navbar-nav">
           <% if (currentUser) { %>
