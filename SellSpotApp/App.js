@@ -210,9 +210,8 @@ function validateRegistration(req, res, next) {
     next();
 }
 
-// mag
-// Display one listing
-// Display one listing
+//mag
+// View one listing
 app.get('/listing/:id', (req, res) => {
   const listingId = parseInt(req.params.id);
 
@@ -428,7 +427,8 @@ app.get('/itemImage/:id', (req, res) => {
   });
 });
 
-// Display listings managed by the current user
+//mag
+// View listings belonging to the logged-in user
 app.get('/myListings', checkAuthenticated, (req, res) => {
 const sql = `
   SELECT
@@ -447,7 +447,6 @@ const sql = `
     users.full_name AS sellerName
   FROM items
   JOIN users ON items.created_by = users.user_id
-  // Show only listings created by the currently logged-in user
   WHERE items.created_by = ?
 `;
 
