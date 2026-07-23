@@ -158,3 +158,66 @@
 
     </div>
 </div>
+
+
+<!-- Eant: display filtered users -->
+<div class="card shadow-sm mt-4">
+
+    <div class="card-header bg-dark text-white">
+        <h2 class="h5 mb-0">User Accounts</h2>
+    </div>
+
+    <div class="card-body">
+
+        <p>
+            <strong>Users found:</strong>
+            <%= users.length %>
+        </p>
+
+        <% if (users.length > 0) { %>
+
+            <div class="table-responsive">
+
+                <table class="table table-hover align-middle">
+
+                    <thead>
+                        <tr>
+                            <th>User ID</th>
+                            <th>Full Name</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Rating</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        <% users.forEach((user) => { %>
+
+                            <tr>
+                                <td><%= user.user_id %></td>
+                                <td><%= user.full_name %></td>
+                                <td><%= user.email %></td>
+                                <td><%= user.role %></td>
+                                <td><%= user.rating %></td>
+                            </tr>
+
+                        <% }) %>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        <% } else { %>
+
+            <div class="alert alert-secondary mb-0">
+                No users found for the selected role.
+            </div>
+
+        <% } %>
+
+    </div>
+
+</div>
