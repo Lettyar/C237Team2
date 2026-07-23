@@ -179,7 +179,7 @@
 
               <div class="row g-3">
 
-                <div class="col-md-6">
+                <div class="col-md-4">
 
                   <label for="search" class="form-label">
                     Search item
@@ -237,7 +237,63 @@
                 </div>
 
                 <div class="col-md-2 d-grid align-items-end">
+<div class="col-md-2">
 
+  <label for="condition" class="form-label">
+    Condition
+  </label>
+
+  <select
+    class="form-select"
+    id="condition"
+    name="condition"
+  >
+
+    <option
+      value=""
+      <%= condition === '' ? 'selected' : '' %>
+    >
+      All conditions
+    </option>
+
+    <option
+      value="new"
+      <%= condition === 'new' ? 'selected' : '' %>
+    >
+      New
+    </option>
+
+    <option
+      value="like_new"
+      <%= condition === 'likel_new' ? 'selected' : '' %>
+    >
+      Like New
+    </option>
+
+    <option
+      value="good"
+      <%= condition === 'good' ? 'selected' : '' %>
+    >
+      Good
+    </option>
+
+    <option
+      value="fair"
+      <%= condition === 'fair' ? 'selected' : '' %>
+    >
+      Fair
+    </option>
+
+    <option
+      value="worn"
+      <%= condition === 'worn' ? 'selected' : '' %>
+    >
+      Worn
+    </option>
+
+  </select>
+
+</div>
                   <button type="submit" class="btn btn-dark">
                     Search
                   </button>
