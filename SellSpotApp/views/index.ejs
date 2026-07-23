@@ -244,121 +244,186 @@
 
     </div>
 
-    <form
-      action="/"
-      method="GET"
-      class="card card-body mb-4"
-    >
+<!-- Eant: search, filtering and sorting controls -->
+<form action="/" method="GET" class="card card-body mb-4">
 
-      <div class="row g-3">
+  <div class="row g-3">
 
-        <div class="col-md-6">
+    <div class="col-md-4">
+      <label for="search" class="form-label">
+        Search item
+      </label>
 
-          <label
-            for="search"
-            class="form-label"
-          >
-            Search item
-          </label>
+      <input
+        type="text"
+        class="form-control"
+        id="search"
+        name="search"
+        value="<%= search %>"
+        placeholder="Search item name or description"
+      >
+    </div>
 
-          <input
-            type="text"
-            class="form-control"
-            id="search"
-            name="search"
-            value="<%= search %>"
-            placeholder="Enter item name"
-          >
+    <div class="col-md-2">
+      <label for="category" class="form-label">
+        Category
+      </label>
 
-        </div>
+      <select
+        class="form-select"
+        id="category"
+        name="category"
+      >
+        <option value="">All categories</option>
 
-        <div class="col-md-4">
+        <option
+          value="1"
+          <%= String(category) === '1' ? 'selected' : '' %>
+        >
+          Electronics
+        </option>
 
-          <label
-            for="category"
-            class="form-label"
-          >
-            Category
-          </label>
+        <option
+          value="2"
+          <%= String(category) === '2' ? 'selected' : '' %>
+        >
+          Fashion
+        </option>
 
-          <select
-            class="form-select"
-            id="category"
-            name="category"
-          >
+        <option
+          value="3"
+          <%= String(category) === '3' ? 'selected' : '' %>
+        >
+          Home
+        </option>
 
-            <option value="">
-              All categories
-            </option>
+        <option
+          value="4"
+          <%= String(category) === '4' ? 'selected' : '' %>
+        >
+          Books
+        </option>
 
-            <option
-              value="Electronics"
-              <%= category === 'Electronics'
-                ? 'selected'
-                : ''
-              %>
-            >
-              Electronics
-            </option>
+        <option
+          value="5"
+          <%= String(category) === '5' ? 'selected' : '' %>
+        >
+          Others
+        </option>
+      </select>
+    </div>
 
-            <option
-              value="Fashion"
-              <%= category === 'Fashion'
-                ? 'selected'
-                : ''
-              %>
-            >
-              Fashion
-            </option>
+    <div class="col-md-2">
+      <label for="condition" class="form-label">
+        Condition
+      </label>
 
-            <option
-              value="Home"
-              <%= category === 'Home'
-                ? 'selected'
-                : ''
-              %>
-            >
-              Home
-            </option>
+      <select
+        class="form-select"
+        id="condition"
+        name="condition"
+      >
+        <option value="">All conditions</option>
 
-            <option
-              value="Books"
-              <%= category === 'Books'
-                ? 'selected'
-                : ''
-              %>
-            >
-              Books
-            </option>
+        <option
+          value="new"
+          <%= condition === 'new' ? 'selected' : '' %>
+        >
+          New
+        </option>
 
-            <option
-              value="Others"
-              <%= category === 'Others'
-                ? 'selected'
-                : ''
-              %>
-            >
-              Others
-            </option>
+        <option
+          value="like_new"
+          <%= condition === 'like_new' ? 'selected' : '' %>
+        >
+          Like New
+        </option>
 
-          </select>
+        <option
+          value="good"
+          <%= condition === 'good' ? 'selected' : '' %>
+        >
+          Good
+        </option>
 
-        </div>
+        <option
+          value="fair"
+          <%= condition === 'fair' ? 'selected' : '' %>
+        >
+          Fair
+        </option>
 
-        <div class="col-md-2 d-grid align-items-end">
+        <option
+          value="worn"
+          <%= condition === 'worn' ? 'selected' : '' %>
+        >
+          Worn
+        </option>
+      </select>
+    </div>
 
-          <button
-            type="submit"
-            class="btn btn-dark"
-          >
-            Search
-          </button>
+    <div class="col-md-2">
+      <label for="sort" class="form-label">
+        Sort by
+      </label>
 
-        </div>
+      <select
+        class="form-select"
+        id="sort"
+        name="sort"
+      >
+        <option
+          value="newest"
+          <%= sort === 'newest' ? 'selected' : '' %>
+        >
+          Newest
+        </option>
 
-      </div>
+        <option
+          value="oldest"
+          <%= sort === 'oldest' ? 'selected' : '' %>
+        >
+          Oldest
+        </option>
 
-    </form>
+        <option
+          value="priceLow"
+          <%= sort === 'priceLow' ? 'selected' : '' %>
+        >
+          Price: Low to High
+        </option>
+
+        <option
+          value="priceHigh"
+          <%= sort === 'priceHigh' ? 'selected' : '' %>
+        >
+          Price: High to Low
+        </option>
+
+        <option
+          value="nameAZ"
+          <%= sort === 'nameAZ' ? 'selected' : '' %>
+        >
+          Name: A–Z
+        </option>
+      </select>
+    </div>
+
+    <div class="col-md-2 d-grid align-items-end">
+      <button type="submit" class="btn btn-dark">
+        Apply
+      </button>
+    </div>
+
+  </div>
+
+  <div class="mt-3">
+    <a href="/" class="btn btn-outline-secondary">
+      Clear Search and Filters
+    </a>
+  </div>
+
+</form>
 
     <div class="d-flex justify-content-between align-items-center mb-3">
 
