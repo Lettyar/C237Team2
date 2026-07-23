@@ -404,15 +404,30 @@ app.get('/itemImage/:id', (req, res) => {
 
 // Display listings managed by the current user
 app.get('/myListings', checkAuthenticated, (req, res) => {
-  let results;
+  const sql = `
+  SELECT
+    items.item_id AS id,
+    items.item_name AS title,
+    items.price,
+    items.image_url AS image,
+    items.category_id AS category,
+    items.condition_status AS \`condition\`,
+    users.full_name AS sellerName
+  FROM items
+  JOIN users ON items.created_by = users.user_id
+  WHERE items.created_by = ?
+`;
 
-  if (req.session.user.role === 'admin') {
-    results = listings;
-  } else {
-    results = listings.filter((listing) => listing.sellerId === req.session.user.id);
-  }
+  connection.query(sql, [req.session.user.id], (error, results) => {
+    if (error) {
+      console.error('Error retrieving my listings:', error);
+      return res.status(500).send('Database error');
+    }
 
-  res.render('myListings', { listings: results });
+    res.render('myListings', {
+      listings: results
+    });
+  });
 });
 
 
