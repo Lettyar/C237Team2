@@ -100,21 +100,21 @@ app.get('/', (req, res) => {
   const sort = req.query.sort || 'newest';
 
   let sql = `
-    SELECT
-      item_id AS id,
-      item_name AS title,
-      description,
-      price,
-      condition_status AS \`condition\`,
-      image_url AS image,
-      (image_data IS NOT NULL) AS hasDatabaseImage,
-      category_id AS category,
-      status,
-      created_at,
-      '' AS location
-    FROM items
-    WHERE status != 'unlisted'
-  `;
+  SELECT
+    item_id AS id,
+    item_name AS title,
+    description,
+    price,
+    condition_status AS \`condition\`,
+    image_url AS image,
+    (image_data IS NOT NULL) AS hasDatabaseImage,
+    category_id AS category,
+    location,
+    status,
+    created_at
+  FROM items
+  WHERE status != 'unlisted'
+`;
 
   const values = [];
 
@@ -179,6 +179,7 @@ function validateRegistration(req, res, next) {
 
 // mag
 // Display one listing
+// Display one listing
 app.get('/listing/:id', (req, res) => {
   const listingId = parseInt(req.params.id);
 
@@ -192,6 +193,7 @@ app.get('/listing/:id', (req, res) => {
       items.image_url AS image,
       (items.image_data IS NOT NULL) AS hasDatabaseImage,
       items.category_id AS category,
+      items.location AS location,
       items.status,
       items.created_by AS sellerId,
       items.created_at,
@@ -215,12 +217,6 @@ app.get('/listing/:id', (req, res) => {
       listing: results[0]
     });
   });
-});
-
-
-// Display registration form
-app.get('/register', (req, res) => {
-  res.render('register');
 });
 
 
@@ -323,7 +319,8 @@ app.post(
       description,
       price,
       category,
-      condition
+      condition,
+      location
     } = req.body;
 
     const imageData = req.file ? req.file.buffer : null;
@@ -339,9 +336,10 @@ app.post(
         image_data,
         image_type,
         category_id,
+        location,
         created_by
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const values = [
@@ -352,6 +350,7 @@ app.post(
       imageData,
       imageType,
       category,
+      location,
       req.session.user.id
     ];
 
@@ -398,18 +397,24 @@ app.get('/itemImage/:id', (req, res) => {
 
 // Display listings managed by the current user
 app.get('/myListings', checkAuthenticated, (req, res) => {
-  const sql = `
+const sql = `
   SELECT
     items.item_id AS id,
     items.item_name AS title,
+    items.description,
     items.price,
-    items.image_url AS image,
-    items.category_id AS category,
     items.condition_status AS \`condition\`,
+    items.image_url AS image,
+    (items.image_data IS NOT NULL) AS hasDatabaseImage,
+    items.category_id AS category,
+    items.location AS location,
+    items.status,
+    items.created_by AS sellerId,
+    items.created_at,
     users.full_name AS sellerName
   FROM items
   JOIN users ON items.created_by = users.user_id
-  WHERE items.created_by = ?
+  WHERE items.item_id = ?
 `;
 
   connection.query(sql, [req.session.user.id], (error, results) => {

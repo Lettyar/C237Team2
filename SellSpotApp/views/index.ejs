@@ -24,7 +24,6 @@
 <body>
 
   <nav class="navbar navbar-expand-sm bg-dark navbar-dark">
-
     <div class="container">
 
       <a class="navbar-brand" href="/">
@@ -40,29 +39,20 @@
         <span class="navbar-toggler-icon"></span>
       </button>
 
-      <div
-        class="collapse navbar-collapse"
-        id="mainNavbar"
-      >
+      <div class="collapse navbar-collapse" id="mainNavbar">
 
         <ul class="navbar-nav me-auto">
 
           <% if (currentUser) { %>
 
             <li class="nav-item">
-              <a
-                class="nav-link"
-                href="/addListing"
-              >
+              <a class="nav-link" href="/addListing">
                 Add Listing
               </a>
             </li>
 
             <li class="nav-item">
-              <a
-                class="nav-link"
-                href="/myListings"
-              >
+              <a class="nav-link" href="/myListings">
                 <%= currentUser.role === 'admin'
                   ? 'Manage Listings'
                   : 'My Listings'
@@ -70,58 +60,36 @@
               </a>
             </li>
 
-            <% if (currentUser.role === 'admin') { %>
-
-              <li class="nav-item">
-                <a
-                  class="nav-link"
-                  href="/adminboard"
-                >
-                  Admin Board
-                </a>
-              </li>
-
-            <% } %>
-
           <% } %>
 
         </ul>
 
         <ul class="navbar-nav">
 
-                <% if (currentUser) { %>
-                    <li class="nav-item">
-                        <span class="nav-link text-white">
-                            <%= currentUser.name %>
-                            <span class="badge bg-danger ms-1">Admin</span>
-                        </span>
-                    </li>
+          <% if (currentUser) { %>
 
             <li class="nav-item">
-              <a
-                class="btn btn-outline-light"
-                href="/logout"
-              >
+              <span class="nav-link text-white">
+                <%= currentUser.name %>
+              </span>
+            </li>
+
+            <li class="nav-item">
+              <a class="btn btn-outline-light" href="/logout">
                 Logout
               </a>
             </li>
 
           <% } else { %>
 
-            <li class="nav-item">
-              <a
-                class="btn btn-outline-light"
-                href="/register"
-              >
+            <li class="nav-item me-2">
+              <a class="btn btn-outline-light" href="/register">
                 Register
               </a>
             </li>
 
             <li class="nav-item">
-              <a
-                class="btn btn-outline-light"
-                href="/login"
-              >
+              <a class="btn btn-outline-light" href="/login">
                 Login
               </a>
             </li>
@@ -131,12 +99,10 @@
         </ul>
 
       </div>
-
     </div>
-
   </nav>
 
-  <div class="container">
+  <div class="container mt-4">
 
     <div
       id="myCarousel"
@@ -168,273 +134,183 @@
       <div class="carousel-inner">
 
         <div class="carousel-item active">
-
           <div class="alert-slide alert-orange">
 
             <% if (currentUser) { %>
 
               <h2>
-                Welcome to SellSpot,
-                <%= currentUser.name %>
+                Welcome to SellSpot, <%= currentUser.name %>
               </h2>
 
             <% } else { %>
 
-              <h2>Welcome to SellSpot</h2>
+              <h2>
+                Welcome to SellSpot
+              </h2>
 
             <% } %>
 
             <p>
-              Find affordable items or create a listing
-              for something you no longer need.
+              Find affordable items or create a listing for something you no longer need.
             </p>
 
           </div>
-
         </div>
 
         <div class="carousel-item">
-
           <div class="alert-slide alert-red">
 
-            <h2>Beware of Scams</h2>
+            <h2>
+              Beware of Scams
+            </h2>
 
             <p>
-              SellSpot Employees will never ask for payment.
+              SellSpot employees will never ask for payment.
             </p>
 
           </div>
-
         </div>
 
       </div>
 
     </div>
 
-  </div>
+    <% if (success && success.length > 0) { %>
 
-  <div class="container mt-4">
-
-    <% if (success.length > 0) { %>
-
-      <div class="alert alert-success">
+      <div class="alert alert-success mt-4">
         <%= success[0] %>
       </div>
 
     <% } %>
 
-    <% if (error.length > 0) { %>
+    <% if (error && error.length > 0) { %>
 
-      <div class="alert alert-danger">
+      <div class="alert alert-danger mt-4">
         <%= error[0] %>
       </div>
 
     <% } %>
 
-    <div class="p-4 mb-4 bg-primary text-white rounded">
+    <div class="p-4 my-4 bg-primary text-white rounded">
 
       <h1>
         Buy and sell second-hand items
       </h1>
 
       <p class="mb-0">
-        Find affordable items or create a listing
-        for something you no longer need.
+        Find affordable items or create a listing for something you no longer need.
       </p>
 
     </div>
 
-<!-- Eant: search, filtering and sorting controls -->
-<form action="/" method="GET" class="card card-body mb-4">
+    <form
+      action="/"
+      method="GET"
+      class="card card-body mb-4"
+    >
 
-  <div class="row g-3">
+      <div class="row g-3">
 
-    <div class="col-md-4">
-      <label for="search" class="form-label">
-        Search item
-      </label>
+        <div class="col-md-6">
 
-      <input
-        type="text"
-        class="form-control"
-        id="search"
-        name="search"
-        value="<%= search %>"
-        placeholder="Search item name or description"
-      >
-    </div>
+          <label for="search" class="form-label">
+            Search item
+          </label>
 
-    <div class="col-md-2">
-      <label for="category" class="form-label">
-        Category
-      </label>
+          <input
+            type="text"
+            class="form-control"
+            id="search"
+            name="search"
+            value="<%= search %>"
+            placeholder="Enter item name"
+          >
 
-      <select
-        class="form-select"
-        id="category"
-        name="category"
-      >
-        <option value="">All categories</option>
+        </div>
 
-        <option
-          value="1"
-          <%= String(category) === '1' ? 'selected' : '' %>
-        >
-          Electronics
-        </option>
+        <div class="col-md-4">
 
-        <option
-          value="2"
-          <%= String(category) === '2' ? 'selected' : '' %>
-        >
-          Fashion
-        </option>
+          <label for="category" class="form-label">
+            Category
+          </label>
 
-        <option
-          value="3"
-          <%= String(category) === '3' ? 'selected' : '' %>
-        >
-          Home
-        </option>
+          <select
+            class="form-select"
+            id="category"
+            name="category"
+          >
 
-        <option
-          value="4"
-          <%= String(category) === '4' ? 'selected' : '' %>
-        >
-          Books
-        </option>
+            <option value="">
+              All categories
+            </option>
 
-        <option
-          value="5"
-          <%= String(category) === '5' ? 'selected' : '' %>
-        >
-          Others
-        </option>
-      </select>
-    </div>
+            <option
+              value="Electronics"
+              <%= category === 'Electronics' ? 'selected' : '' %>
+            >
+              Electronics
+            </option>
 
-    <div class="col-md-2">
-      <label for="condition" class="form-label">
-        Condition
-      </label>
+            <option
+              value="Fashion"
+              <%= category === 'Fashion' ? 'selected' : '' %>
+            >
+              Fashion
+            </option>
 
-      <select
-        class="form-select"
-        id="condition"
-        name="condition"
-      >
-        <option value="">All conditions</option>
+            <option
+              value="Home"
+              <%= category === 'Home' ? 'selected' : '' %>
+            >
+              Home
+            </option>
 
-        <option
-          value="new"
-          <%= condition === 'new' ? 'selected' : '' %>
-        >
-          New
-        </option>
+            <option
+              value="Books"
+              <%= category === 'Books' ? 'selected' : '' %>
+            >
+              Books
+            </option>
 
-        <option
-          value="like_new"
-          <%= condition === 'like_new' ? 'selected' : '' %>
-        >
-          Like New
-        </option>
+            <option
+              value="Sports"
+              <%= category === 'Sports' ? 'selected' : '' %>
+            >
+              Sports
+            </option>
 
-        <option
-          value="good"
-          <%= condition === 'good' ? 'selected' : '' %>
-        >
-          Good
-        </option>
+            <option
+              value="Others"
+              <%= category === 'Others' ? 'selected' : '' %>
+            >
+              Others
+            </option>
 
-        <option
-          value="fair"
-          <%= condition === 'fair' ? 'selected' : '' %>
-        >
-          Fair
-        </option>
+          </select>
 
-        <option
-          value="worn"
-          <%= condition === 'worn' ? 'selected' : '' %>
-        >
-          Worn
-        </option>
-      </select>
-    </div>
+        </div>
 
-    <div class="col-md-2">
-      <label for="sort" class="form-label">
-        Sort by
-      </label>
+        <div class="col-md-2 d-grid align-items-end">
 
-      <select
-        class="form-select"
-        id="sort"
-        name="sort"
-      >
-        <option
-          value="newest"
-          <%= sort === 'newest' ? 'selected' : '' %>
-        >
-          Newest
-        </option>
+          <button type="submit" class="btn btn-dark">
+            Search
+          </button>
 
-        <option
-          value="oldest"
-          <%= sort === 'oldest' ? 'selected' : '' %>
-        >
-          Oldest
-        </option>
+        </div>
 
-        <option
-          value="priceLow"
-          <%= sort === 'priceLow' ? 'selected' : '' %>
-        >
-          Price: Low to High
-        </option>
+      </div>
 
-        <option
-          value="priceHigh"
-          <%= sort === 'priceHigh' ? 'selected' : '' %>
-        >
-          Price: High to Low
-        </option>
-
-        <option
-          value="nameAZ"
-          <%= sort === 'nameAZ' ? 'selected' : '' %>
-        >
-          Name: A–Z
-        </option>
-      </select>
-    </div>
-
-    <div class="col-md-2 d-grid align-items-end">
-      <button type="submit" class="btn btn-dark">
-        Apply
-      </button>
-    </div>
-
-  </div>
-
-  <div class="mt-3">
-    <a href="/" class="btn btn-outline-secondary">
-      Clear Search and Filters
-    </a>
-  </div>
-
-</form>
+    </form>
 
     <div class="d-flex justify-content-between align-items-center mb-3">
 
-      <h2>Marketplace Listings</h2>
+      <h2>
+        Marketplace Listings
+      </h2>
 
       <% if (currentUser) { %>
 
-        <a
-          href="/addListing"
-          class="btn btn-success"
-        >
+        <a href="/addListing" class="btn btn-success">
           Add New Listing
         </a>
 
@@ -449,7 +325,6 @@
         <% for (let i = 0; i < listings.length; i++) { %>
 
           <div class="col-md-6 col-lg-4">
-
             <div class="card h-100 shadow-sm">
 
               <% if (listings[i].hasDatabaseImage) { %>
@@ -491,18 +366,14 @@
                 </p>
 
                 <p class="card-text text-muted">
-
                   <%= listings[i].condition %>
-
                   &middot;
-
                   <%= listings[i].category %>
-
                 </p>
 
                 <p class="card-text">
-                  Meet-up:
-                  <%= listings[i].location %>
+                  <strong>Meet-up Location:</strong>
+                  <%= listings[i].location || 'Not provided' %>
                 </p>
 
                 <a
@@ -513,9 +384,7 @@
                 </a>
 
               </div>
-
             </div>
-
           </div>
 
         <% } %>
@@ -525,7 +394,9 @@
     <% } else { %>
 
       <div class="alert alert-secondary text-center">
+
         No listings found. Create an account and add the first item.
+
       </div>
 
     <% } %>
