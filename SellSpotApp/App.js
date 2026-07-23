@@ -411,69 +411,156 @@ app.get('/myListings', checkAuthenticated, (req, res) => {
 // Show Edit Listing Page (GET) Gurjeet
 app.get('/editListing/:id', checkAuthenticated, (req, res) => {
 
-    // Get the listing ID from the URL and convert it into a number
-    const id = parseInt(req.params.id);
-
-    // Search the listings array for the listing with the matching ID
-    const currentListing = listings.find(listing => listing.id === id);
-
-    // If no listing is found, return a 404 error
-    if (!currentListing) {
-        return res.status(404).send('Listing not found.');
-    }
-
-    // Check whether the logged-in user is allowed to edit this listing
-    if (!canManageListing(req.session.user, currentListing)) {
-        req.flash('error', 'You do not have permission to edit this listing.');
-        return res.redirect('/');
-    }
-
-    // Open the editListing.ejs page and send the listing data to it
-    res.render('editListing', {
-        listing: currentListing
-    });
-});
-
-
-
-// Update Listing (POST) Gurjeet
-app.post('/editListing/:id', checkAuthenticated, upload.single('image'), (req, res) => {
-
     // Get the listing ID from the URL
     const id = parseInt(req.params.id);
 
-    // Find the listing that the user wants to edit
-    const currentListing = listings.find(listing => listing.id === id);
+    // Get the listing from the database
+    const sql = `
+        SELECT *
+        FROM items
+        WHERE item_id = ?
+    `;
 
-    // If the listing doesn't exist, show an error
-    if (!currentListing) {
-        return res.status(404).send('Listing not found.');
-    }
+    connection.query(sql, [id], (err, results) => {
+        if (err) {
+            console.error(err);
+            return res.status(500).send("Database Error");
+        }
+        // Check if listing exists
+        if (results.length === 0) {
+            return res.status(404).send("Listing not found.");
+        }
+        const currentListing = results[0];
+        // Check if the user owns the listing or is an admin
+        if (!canManageListing(req.session.user, {
+            sellerId: currentListing.created_by
+        })) {
+            req.flash("error", "You do not have permission to edit this listing.");
+            return res.redirect("/");
+        }
+        // Open the edit page
+        res.render("editListing", {
+            listing: currentListing
+        });
+    });
+});
 
-    // Check if the user has permission to edit this listing
-    if (!canManageListing(req.session.user, currentListing)) {
-        req.flash('error', 'You do not have permission to edit this listing.');
-        return res.redirect('/');
-    }
+// Update Listing (POST) Gurjeet
+app.post('/editListing/:id', checkAuthenticated, addListingUpload.single('image'), (req, res) => {
 
-    // Update the listing details using the values submitted from the form
-    currentListing.title = req.body.title;
-    currentListing.description = req.body.description;
-    currentListing.price = req.body.price;
-    currentListing.category = req.body.category;
-    currentListing.condition = req.body.condition;
-    currentListing.location = req.body.location;
+    const id = parseInt(req.params.id);
 
-    // If the user uploads a new image, replace the old image filename
-    if (req.file) {
-        currentListing.image = req.file.filename;
-    }
+    // Check if listing exists
+    connection.query(
+        "SELECT * FROM items WHERE item_id = ?",
+        [id],
+        (err, results) => {
 
-    // Store a success message to display after redirecting
-    req.flash('success', 'Listing has been updated successfully!');
+            if (err) {
+                console.error(err);
+                return res.status(500).send("Database Error");
+            }
 
-    // Redirect the user back to the updated listing page
-    res.redirect(`/listing/${currentListing.id}`);
+            if (results.length === 0) {
+                return res.status(404).send("Listing not found.");
+            }
+
+            const currentListing = results[0];
+
+            // Permission check
+            if (!canManageListing(req.session.user, {
+                sellerId: currentListing.created_by
+            })) {
+                req.flash("error", "You do not have permission to edit this listing.");
+                return res.redirect("/");
+            }
+
+            const {
+                title,
+                description,
+                price,
+                category,
+                condition
+            } = req.body;
+
+            // If a new image is uploaded
+            if (req.file) {
+
+                const updateSql = `
+                    UPDATE items
+                    SET
+                        item_name = ?,
+                        description = ?,
+                        price = ?,
+                        category_id = ?,
+                        condition_status = ?,
+                        image_data = ?,
+                        image_type = ?
+                    WHERE item_id = ?
+                `;
+
+                connection.query(
+                    updateSql,
+                    [
+                        title,
+                        description,
+                        price,
+                        category,
+                        condition,
+                        req.file.buffer,
+                        req.file.mimetype,
+                        id
+                    ],
+                    (err) => {
+
+                        if (err) {
+                            console.error(err);
+                            return res.status(500).send("Database Error");
+                        }
+
+                        req.flash("success", "Listing updated successfully!");
+                        res.redirect(`/listing/${id}`);
+                    }
+                );
+
+            } else {
+
+                // Update without changing image
+                const updateSql = `
+                    UPDATE items
+                    SET
+                        item_name = ?,
+                        description = ?,
+                        price = ?,
+                        category_id = ?,
+                        condition_status = ?
+                    WHERE item_id = ?
+                `;
+
+                connection.query(
+                    updateSql,
+                    [
+                        title,
+                        description,
+                        price,
+                        category,
+                        condition,
+                        id
+                    ],
+                    (err) => {
+
+                        if (err) {
+                            console.error(err);
+                            return res.status(500).send("Database Error");
+                        }
+
+                        req.flash("success", "Listing updated successfully!");
+                        res.redirect(`/listing/${id}`);
+                    }
+                );
+            }
+        }
+    );
 });
 
 //Zuo Jing
