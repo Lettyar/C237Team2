@@ -35,6 +35,25 @@ const connection = mysql.createConnection({
     database: 'c237_027_t2sellspot'
 });
 
+connection.query(`
+  CREATE TABLE IF NOT EXISTS reviews (
+    review_id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    item_id INT NOT NULL,
+    rating INT NOT NULL,
+    comment TEXT,
+    review_by INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_reviews_user FOREIGN KEY (user_id) REFERENCES users(user_id),
+    CONSTRAINT fk_reviews_item FOREIGN KEY (item_id) REFERENCES items(item_id),
+    CONSTRAINT fk_reviews_reviewer FOREIGN KEY (review_by) REFERENCES users(user_id)
+  )
+`, (error) => {
+  if (error) {
+    console.error('Error creating reviews table:', error);
+  }
+});
+
 // Multer setup for listing image upload
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -85,6 +104,224 @@ function checkAdmin(req, res, next) {
 function canManageListing(user, listing) {
   return user.role === 'admin' || user.id === listing.sellerId;
 }
+
+function updateUserAverageRating(userId, callback) {
+  const averageSql = 'SELECT AVG(rating) AS averageRating FROM reviews WHERE user_id = ?';
+
+  connection.query(averageSql, [userId], (error, results) => {
+    if (error) {
+      return callback(error);
+    }
+
+    const averageRating = results[0].averageRating !== null
+      ? Number(results[0].averageRating).toFixed(1)
+      : '0.0';
+
+    const updateSql = 'UPDATE users SET rating = ? WHERE user_id = ?';
+
+    connection.query(updateSql, [averageRating, userId], (updateError) => {
+      callback(updateError);
+    });
+  });
+}
+
+function getUserRatings(callback) {
+  const sql = `
+    SELECT
+      user_id,
+      full_name,
+      email,
+      role,
+      rating
+    FROM users
+    WHERE role = 'user'
+    ORDER BY full_name ASC
+  `;
+
+  connection.query(sql, (error, users) => {
+    if (error) {
+      return callback(error, null);
+    }
+
+    const reviewSql = `
+      SELECT user_id, AVG(rating) AS averageRating
+      FROM reviews
+      GROUP BY user_id
+    `;
+
+    connection.query(reviewSql, (reviewError, reviewResults) => {
+      if (reviewError) {
+        return callback(reviewError, null);
+      }
+
+      const reviewMap = {};
+      reviewResults.forEach((review) => {
+        reviewMap[review.user_id] = Number(review.averageRating).toFixed(1);
+      });
+
+      const updatedUsers = users.map((user) => ({
+        ...user,
+        rating: reviewMap[user.user_id] || user.rating || '0.0'
+      }));
+
+      callback(null, updatedUsers);
+    });
+  });
+}
+
+app.get('/ratings', checkAuthenticated, (req, res) => {
+  const search = (req.query.search || '').trim();
+  const values = [req.session.user.id];
+
+  let sql = `
+    SELECT
+      user_id,
+      full_name,
+      email,
+      role,
+      rating
+    FROM users
+    WHERE user_id != ?
+      AND role = 'user'
+  `;
+
+  if (search) {
+    sql += ` AND full_name LIKE ?`;
+    values.push(`%${search}%`);
+  }
+
+  sql += ` ORDER BY full_name ASC`;
+
+  connection.query(sql, values, (error, users) => {
+    if (error) {
+      console.error('Error searching users for ratings:', error);
+      return res.status(500).send('Database error');
+    }
+
+    const reviewSql = `
+      SELECT user_id, AVG(rating) AS averageRating
+      FROM reviews
+      GROUP BY user_id
+    `;
+
+    connection.query(reviewSql, (reviewError, reviewResults) => {
+      if (reviewError) {
+        console.error('Error loading review averages:', reviewError);
+        return res.status(500).send('Database error');
+      }
+
+      const reviewMap = {};
+      reviewResults.forEach((review) => {
+        reviewMap[review.user_id] = Number(review.averageRating).toFixed(1);
+      });
+
+      const ratedUsers = users.map((user) => ({
+        ...user,
+        rating: reviewMap[user.user_id] || user.rating || '0.0'
+      }));
+
+      if (ratedUsers.length === 0) {
+        return res.render('ratings', {
+          users: [],
+          search: search,
+          userListings: {}
+        });
+      }
+
+      const userIds = ratedUsers.map((user) => user.user_id);
+    const placeholders = userIds.map(() => '?').join(', ');
+    const listingSql = `
+      SELECT item_id, item_name, created_by
+      FROM items
+      WHERE created_by IN (${placeholders})
+      ORDER BY created_by, item_name ASC
+    `;
+
+    connection.query(listingSql, userIds, (listingError, listings) => {
+      if (listingError) {
+        console.error('Error loading user listings:', listingError);
+        return res.status(500).send('Database error');
+      }
+
+      const userListings = {};
+
+      listings.forEach((listing) => {
+        if (!userListings[listing.created_by]) {
+          userListings[listing.created_by] = [];
+        }
+
+        userListings[listing.created_by].push(listing);
+      });
+
+      res.render('ratings', {
+        users: ratedUsers,
+        search: search,
+        userListings: userListings
+      });
+    });
+  });
+  });
+});
+
+app.post('/ratings', checkAuthenticated, (req, res) => {
+  const targetUserId = parseInt(req.body.userId, 10);
+  const itemId = parseInt(req.body.itemId, 10);
+  const rating = parseInt(req.body.rating, 10);
+  const comment = (req.body.comment || '').trim();
+  const search = (req.body.search || '').trim();
+
+  if (!targetUserId || targetUserId === req.session.user.id) {
+    req.flash('error', 'You cannot review yourself.');
+    return res.redirect('/ratings');
+  }
+
+  if (!itemId || !rating || rating < 1 || rating > 5) {
+    req.flash('error', 'Please choose a valid rating and item.');
+    return res.redirect(`/ratings?search=${encodeURIComponent(search)}`);
+  }
+
+  if (!comment) {
+    req.flash('error', 'Please add a comment with your review.');
+    return res.redirect(`/ratings?search=${encodeURIComponent(search)}`);
+  }
+
+  const verifySql = 'SELECT item_id FROM items WHERE item_id = ? AND created_by = ?';
+
+  connection.query(verifySql, [itemId, targetUserId], (verifyError, verifyResults) => {
+    if (verifyError) {
+      console.error('Error validating review item:', verifyError);
+      req.flash('error', 'Unable to submit your review right now.');
+      return res.redirect(`/ratings?search=${encodeURIComponent(search)}`);
+    }
+
+    if (verifyResults.length === 0) {
+      req.flash('error', 'Please choose a valid listing for that user.');
+      return res.redirect(`/ratings?search=${encodeURIComponent(search)}`);
+    }
+
+    const insertSql = `
+      INSERT INTO reviews (user_id, item_id, rating, comment, review_by)
+      VALUES (?, ?, ?, ?, ?)
+    `;
+
+    connection.query(insertSql, [targetUserId, itemId, rating, comment, req.session.user.id], (insertError) => {
+      if (insertError) {
+        console.error('Error saving review:', insertError);
+        req.flash('error', 'Unable to save your review.');
+        return res.redirect(`/ratings?search=${encodeURIComponent(search)}`);
+      }
+
+      updateUserAverageRating(targetUserId, (updateError) => {
+        if (updateError) {
+          console.error('Error updating user rating:', updateError);
+        }
+
+        req.flash('success', 'Review posted successfully.');
+        return res.redirect(`/ratings?search=${encodeURIComponent(search)}`);
+      });
+    });
+  });
+});
 
 app.post('/adminboard/update-role/:id', checkAdmin, (req, res) => {
   const userId = parseInt(req.params.id, 10);
@@ -181,9 +418,32 @@ app.get('/adminboard', checkAdmin, (req, res) => {
       return res.status(500).send('Database error');
     }
 
-    res.render('adminboard', {
-      users: results,
-      role: role
+    const reviewSql = `
+      SELECT user_id, AVG(rating) AS averageRating
+      FROM reviews
+      GROUP BY user_id
+    `;
+
+    connection.query(reviewSql, (reviewError, reviewResults) => {
+      if (reviewError) {
+        console.error('Error loading review averages:', reviewError);
+        return res.status(500).send('Database error');
+      }
+
+      const reviewMap = {};
+      reviewResults.forEach((review) => {
+        reviewMap[review.user_id] = Number(review.averageRating).toFixed(1);
+      });
+
+      const users = results.map((user) => ({
+        ...user,
+        rating: reviewMap[user.user_id] || user.rating || '0.0'
+      }));
+
+      res.render('adminboard', {
+        users: users,
+        role: role
+      });
     });
   });
 });
