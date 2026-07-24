@@ -212,6 +212,7 @@ app.get('/', (req, res) => {
     users.full_name AS sellerName
   FROM items
   JOIN users ON items.created_by = users.user_id
+  WHERE items.status != 'unlisted'
 `;
 
   const values = [];
@@ -419,6 +420,11 @@ app.post(
       condition,
       location
     } = req.body;
+
+    if (!title || !price || !category || !condition || !location) {
+      req.flash('error', 'Please complete all required listing fields.');
+      return res.redirect('/addListing');
+    }
 
     const imageData = req.file ? req.file.buffer : null;
     const imageType = req.file ? req.file.mimetype : null;
