@@ -147,20 +147,30 @@
 
                 <td>
 
-                  <a
-                    href="/editListing/<%= listings[i].id %>"
-                    class="btn btn-sm btn-warning"
-                  >
-                    Edit
-                  </a>
+                  <div class="d-flex gap-1">
 
-                  <a
-                    href="/deleteListing/<%= listings[i].id %>"
-                    class="btn btn-sm btn-danger"
-                    onclick="return confirm('Delete this listing?')"
-                  >
-                    Delete
-                  </a>
+                    <% if (currentUser.id === listings[i].sellerId) { %>
+                      <a
+                        href="/editListing/<%= listings[i].id %>"
+                        class="btn btn-sm btn-warning"
+                      >
+                        Edit
+                      </a>
+                    <% } %>
+
+                    <% if (currentUser.role === 'admin' || currentUser.id === listings[i].sellerId) { %>
+                      <form
+                        action="/deleteListing/<%= listings[i].id %>"
+                        method="POST"
+                        onsubmit="return confirm('Delete this listing?')"
+                      >
+                        <button type="submit" class="btn btn-sm btn-danger">
+                          Delete
+                        </button>
+                      </form>
+                    <% } %>
+
+                  </div>
 
                 </td>
 

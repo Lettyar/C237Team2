@@ -132,30 +132,30 @@
               <%= listing.description %>
             </p>
 
-            <% if (
-              currentUser &&
-              (
-                currentUser.role === 'admin' ||
-                currentUser.id === listing.sellerId
-              )
-            ) { %>
+            <% if (currentUser) { %>
 
               <div class="d-flex gap-2 mt-4">
 
+                <% if (currentUser.id === listing.sellerId) { %>
                 <a
                   href="/editListing/<%= listing.id %>"
                   class="btn btn-warning"
                 >
                   Edit Listing
                 </a>
+                <% } %>
 
-                <a
-                  href="/deleteListing/<%= listing.id %>"
-                  class="btn btn-danger"
-                  onclick="return confirm('Delete this listing?')"
-                >
-                  Delete Listing
-                </a>
+                <% if (currentUser.role === 'admin' || currentUser.id === listing.sellerId) { %>
+                  <form
+                    action="/deleteListing/<%= listing.id %>"
+                    method="POST"
+                    onsubmit="return confirm('Delete this listing?')"
+                  >
+                    <button type="submit" class="btn btn-danger">
+                      Delete Listing
+                    </button>
+                  </form>
+                <% } %>
 
               </div>
 
