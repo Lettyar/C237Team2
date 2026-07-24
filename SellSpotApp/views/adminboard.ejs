@@ -20,7 +20,7 @@
 
 <body>
 
-<nav class="navbar navbar-expand-lg bg-dark navbar-dark">
+<nav class="navbar navbar-expand-sm bg-dark navbar-dark">
     <div class="container">
 
         <a class="navbar-brand" href="/">
@@ -187,6 +187,7 @@
                             <th>Email</th>
                             <th>Role</th>
                             <th>Rating</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
 
@@ -200,6 +201,26 @@
                                 <td><%= user.email %></td>
                                 <td><%= user.role %></td>
                                 <td><%= user.rating %></td>
+                                <td>
+                                    <div class="d-flex flex-column flex-lg-row gap-2">
+                                        <% if (user.user_id !== currentUser.id) { %>
+                                        <form action="/adminboard/update-role/<%= user.user_id %>" method="POST" class="d-flex gap-2">
+                                            <select class="form-select form-select-sm" name="role">
+                                                <option value="user" <%= user.role === 'user' ? 'selected' : '' %>>User</option>
+                                                <option value="admin" <%= user.role === 'admin' ? 'selected' : '' %>>Admin</option>
+                                            </select>
+                                        </form>
+                                        <% } else { %>
+                                            Current User
+                                        <% } %>
+
+                                        <% if (user.user_id !== currentUser.id) { %>
+                                            <form action="/adminboard/delete-user/<%= user.user_id %>" method="POST" onsubmit="return confirm('Delete this user account?');">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                                            </form>
+                                        <% } %>
+                                    </div>
+                                </td>
                             </tr>
 
                         <% }) %>

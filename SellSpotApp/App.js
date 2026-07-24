@@ -86,6 +86,70 @@ function canManageListing(user, listing) {
   return user.role === 'admin' || user.id === listing.sellerId;
 }
 
+app.post('/adminboard/update-role/:id', checkAdmin, (req, res) => {
+  const userId = parseInt(req.params.id, 10);
+  const role = req.body.role === 'admin' ? 'admin' : 'user';
+
+  if (!userId) {
+    req.flash('error', 'Invalid user selection.');
+    return res.redirect('/adminboard');
+  }
+
+  if (userId === req.session.user.id && role === 'user') {
+    req.flash('error', 'You cannot remove your own admin role.');
+    return res.redirect('/adminboard');
+  }
+
+  const sql = 'UPDATE users SET role = ? WHERE user_id = ?';
+
+  connection.query(sql, [role, userId], (error) => {
+    if (error) {
+      console.error('Error updating user role:', error);
+      req.flash('error', 'Unable to update user role.');
+      return res.redirect('/adminboard');
+    }
+
+    req.flash('success', 'User role updated successfully.');
+    return res.redirect('/adminboard');
+  });
+});
+
+app.post('/adminboard/delete-user/:id', checkAdmin, (req, res) => {
+  const userId = parseInt(req.params.id, 10);
+
+  if (!userId) {
+    req.flash('error', 'Invalid user selection.');
+    return res.redirect('/adminboard');
+  }
+
+  if (userId === req.session.user.id) {
+    req.flash('error', 'You cannot delete your own account.');
+    return res.redirect('/adminboard');
+  }
+
+  const deleteListingsSql = 'DELETE FROM items WHERE created_by = ?';
+  const deleteUserSql = 'DELETE FROM users WHERE user_id = ?';
+
+  connection.query(deleteListingsSql, [userId], (error) => {
+    if (error) {
+      console.error('Error deleting user listings:', error);
+      req.flash('error', 'Unable to delete user account.');
+      return res.redirect('/adminboard');
+    }
+
+    connection.query(deleteUserSql, [userId], (deleteError) => {
+      if (deleteError) {
+        console.error('Error deleting user:', deleteError);
+        req.flash('error', 'Unable to delete user account.');
+        return res.redirect('/adminboard');
+      }
+
+      req.flash('success', 'User account deleted successfully.');
+      return res.redirect('/adminboard');
+    });
+  });
+});
+
 // Eant: display users and filter them by role
 app.get('/adminboard', checkAdmin, (req, res) => {
   const role = req.query.role || '';
