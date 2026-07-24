@@ -100,9 +100,9 @@ function checkAdmin(req, res, next) {
   next();
 }
 
-// Admins can manage all listings. Users can manage only their own listings.
-function canManageListing(user, listing) {
-  return user.role === 'admin' || user.id === listing.sellerId;
+// Only the listing owner can edit a listing.
+function canEditListing(user, listing) {
+  return user.id === listing.sellerId;
 }
 
 function updateUserAverageRating(userId, callback) {
@@ -761,7 +761,7 @@ app.get('/itemImage/:id', (req, res) => {
 //mag
 // View listings belonging to the logged-in user
 app.get('/myListings', checkAuthenticated, (req, res) => {
-const sql = `
+let sql = `
   SELECT
     items.item_id AS id,
     items.item_name AS title,
@@ -778,10 +778,19 @@ const sql = `
     users.full_name AS sellerName
   FROM items
   JOIN users ON items.created_by = users.user_id
-  WHERE items.created_by = ?
 `;
 
-  connection.query(sql, [req.session.user.id], (error, results) => {
+  const values = [];
+
+  // Admins can view all listings; regular users can view only their own.
+  if (req.session.user.role !== 'admin') {
+    sql += ` WHERE items.created_by = ?`;
+    values.push(req.session.user.id);
+  }
+
+  sql += ` ORDER BY items.created_at DESC`;
+
+  connection.query(sql, values, (error, results) => {
     if (error) {
       console.error('Error retrieving my listings:', error);
       return res.status(500).send('Database error');
@@ -818,7 +827,7 @@ app.get('/editListing/:id', checkAuthenticated, (req, res) => {
         }
         const currentListing = results[0];
         // Check if the user owns the listing or is an admin
-        if (!canManageListing(req.session.user, {
+        if (!canEditListing(req.session.user, {
             sellerId: currentListing.created_by
         })) {
             req.flash("error", "You do not have permission to edit this listing.");
@@ -854,7 +863,7 @@ app.post('/editListing/:id', checkAuthenticated, addListingUpload.single('image'
             const currentListing = results[0];
 
             // Permission check
-            if (!canManageListing(req.session.user, {
+            if (!canEditListing(req.session.user, {
                 sellerId: currentListing.created_by
             })) {
                 req.flash("error", "You do not have permission to edit this listing.");
@@ -951,7 +960,7 @@ app.post('/editListing/:id', checkAuthenticated, addListingUpload.single('image'
 
 //Zuo Jing
 // Delete listing
-app.get('/deleteListing/:id', checkAuthenticated, (req, res) => {
+app.post('/deleteListing/:id', checkAuthenticated, (req, res) => {
   const listingId = Number.parseInt(req.params.id, 10);
 
   const checkSql = 'SELECT * FROM items WHERE item_id = ?';
@@ -971,7 +980,7 @@ app.get('/deleteListing/:id', checkAuthenticated, (req, res) => {
     const listing = results[0];
     const currentUser = req.session.user;
 
-    if (currentUser.role !== 'admin' && currentUser.user_id !== listing.user_id) {
+    if (currentUser.role !== 'admin' && currentUser.id !== listing.created_by) {
       req.flash('error', 'You do not have permission to delete this listing.');
       return res.redirect('/');
     }
