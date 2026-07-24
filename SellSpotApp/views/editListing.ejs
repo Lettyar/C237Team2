@@ -29,7 +29,7 @@
             <form action="/editListing/<%= listing.item_id %>" method="POST" enctype="multipart/form-data">
               <div class="mb-3">
                 <label for="title" class="form-label">Item Title</label>
-                <input type="text" class="form-control" id="title" name="title" value="<%= listing.title %>" required>
+                <input type="text" class="form-control" id="title" name="title" value="<%= listing.item_name %>" required>
               </div>
 
               <div class="mb-3">
@@ -45,11 +45,12 @@
                 <div class="col-md-6 mb-3">
                   <label for="category" class="form-label">Category</label>
                   <select class="form-select" id="category" name="category" required>
-                    <option value="Electronics" <%= listing.category === 'Electronics' ? 'selected' : '' %>>Electronics</option>
-                    <option value="Fashion" <%= listing.category === 'Fashion' ? 'selected' : '' %>>Fashion</option>
-                    <option value="Home" <%= listing.category === 'Home' ? 'selected' : '' %>>Home</option>
-                    <option value="Books" <%= listing.category === 'Books' ? 'selected' : '' %>>Books</option>
-                    <option value="Others" <%= listing.category === 'Others' ? 'selected' : '' %>>Others</option>
+                    <option value="Electronics" <%= listing.category_id === 'Electronics' ? 'selected' : '' %>>Electronics</option>
+                    <option value="Fashion" <%= listing.category_id === 'Fashion' ? 'selected' : '' %>>Fashion</option>
+                    <option value="Home" <%= listing.category_id === 'Home' ? 'selected' : '' %>>Home</option>
+                    <option value="Books" <%= listing.category_id === 'Books' ? 'selected' : '' %>>Books</option>
+                    <option value="Sports" <%= listing.category_id === 'Sports' ? 'selected' : '' %>>Sports</option>
+                    <option value="Others" <%= listing.category_id === 'Others' ? 'selected' : '' %>>Others</option>
                   </select>
                 </div>
               </div>
@@ -58,11 +59,11 @@
                 <div class="col-md-6 mb-3">
                   <label for="condition" class="form-label">Condition</label>
                   <select class="form-select" id="condition" name="condition" required>
-                    <option value="New" <%= listing.condition === 'New' ? 'selected' : '' %>>New</option>
-                    <option value="Like New" <%= listing.condition === 'Like New' ? 'selected' : '' %>>Like New</option>
-                    <option value="Good" <%= listing.condition === 'Good' ? 'selected' : '' %>>Good</option>
-                    <option value="Fair" <%= listing.condition === 'Fair' ? 'selected' : '' %>>Fair</option>
-                    <option value="Worn" <%= listing.condition === 'Worn' ? 'selected' : '' %>>Worn</option>
+                    <option value="new" <%= listing.condition_status === 'new' ? 'selected' : '' %>>New</option>
+                    <option value="like_new" <%= listing.condition_status === 'like_new' ? 'selected' : '' %>>Like New</option>
+                    <option value="good" <%= listing.condition_status === 'good' ? 'selected' : '' %>>Good</option>
+                    <option value="fair" <%= listing.condition_status === 'fair' ? 'selected' : '' %>>Fair</option>
+                    <option value="worn" <%= listing.condition_status === 'worn' ? 'selected' : '' %>>Worn</option>
                   </select>
                 </div>
                 <div class="col-md-6 mb-3">
