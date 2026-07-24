@@ -1,0 +1,13 @@
+<% if (success && success.length > 0) { %>
+  <div class="alert alert-success app-alert" role="status">
+    <span aria-hidden="true">✓</span>
+    <span><%= success[0] %></span>
+  </div>
+<% } %>
+
+<% if (error && error.length > 0) { %>
+  <div class="alert alert-danger app-alert" role="alert">
+    <span aria-hidden="true">!</span>
+    <span><%= error[0] %></span>
+  </div>
+<% } %>
