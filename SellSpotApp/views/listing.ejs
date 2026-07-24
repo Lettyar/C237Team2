@@ -1,175 +1,60 @@
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-  <meta charset="UTF-8">
-
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
-  >
-
-  <title><%= listing.title %> - SellSpot</title>
-
-  <link
-    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-    rel="stylesheet"
-  >
-
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-
-  <link rel="stylesheet" href="/style.css">
-</head>
-
+<%- include('partials/head', { pageTitle: listing.title }) %>
 <body>
+  <%- include('partials/navbar', { activePage: 'marketplace' }) %>
 
-  <nav class="navbar navbar-expand-sm bg-dark navbar-dark">
+  <main class="site-main">
+    <div class="container app-container">
+      <%- include('partials/flash') %>
 
-    <div class="container">
-
-      <a class="navbar-brand" href="/">
-        <h3 class="mb-0">SellSpot</h3>
-      </a>
-
-      <a
-        class="btn btn-outline-light"
-        href="/"
-      >
-        Back to Marketplace
-      </a>
-
-    </div>
-
-  </nav>
-
-  <div class="container mt-5 mb-5">
-
-    <% if (success.length > 0) { %>
-
-      <div class="alert alert-success">
-        <%= success[0] %>
+      <div class="mb-3">
+        <a href="/" class="btn btn-outline-secondary">← Back to marketplace</a>
       </div>
 
-    <% } %>
-
-    <% if (error.length > 0) { %>
-
-      <div class="alert alert-danger">
-        <%= error[0] %>
-      </div>
-
-    <% } %>
-
-    <div class="card shadow">
-
-      <div class="row g-0">
-
-        <div class="col-md-6">
-
-          <% if (listing.hasDatabaseImage) { %>
-
-            <img
-              src="/itemImage/<%= listing.id %>"
-              class="detail-image rounded-start"
-              alt="<%= listing.title %>"
-            >
-
-          <% } else if (listing.image) { %>
-
-            <img
-              src="/images/<%= listing.image %>"
-              class="detail-image rounded-start"
-              alt="<%= listing.title %>"
-            >
-
-          <% } else { %>
-
-            <div class="listing-placeholder h-100">
-              No image uploaded
-            </div>
-
-          <% } %>
-
-        </div>
-
-        <div class="col-md-6">
-
-          <div class="card-body p-4">
-
-            <h1 class="card-title">
-              <%= listing.title %>
-            </h1>
-
-            <h3 class="text-primary mb-3">
-              $<%= Number(listing.price).toFixed(2) %>
-            </h3>
-
-            <p>
-              <strong>Category:</strong>
-              <%= listing.category %>
-            </p>
-
-            <p>
-              <strong>Condition:</strong>
-              <%= listing.condition %>
-            </p>
-
-            <p>
-              <strong>Meet-up Location:</strong>
-              <%= listing.location %>
-            </p>
-
-            <p>
-              <strong>Seller:</strong>
-              <%= listing.sellerName %>
-            </p>
-
-            <hr>
-
-            <h5>Description</h5>
-
-            <p>
-              <%= listing.description %>
-            </p>
-
-            <% if (currentUser) { %>
-
-              <div class="d-flex gap-2 mt-4">
-
-                <% if (currentUser.id === listing.sellerId) { %>
-                <a
-                  href="/editListing/<%= listing.id %>"
-                  class="btn btn-warning"
-                >
-                  Edit Listing
-                </a>
-                <% } %>
-
-                <% if (currentUser.role === 'admin' || currentUser.id === listing.sellerId) { %>
-                  <form
-                    action="/deleteListing/<%= listing.id %>"
-                    method="POST"
-                    onsubmit="return confirm('Delete this listing?')"
-                  >
-                    <button type="submit" class="btn btn-danger">
-                      Delete Listing
-                    </button>
-                  </form>
-                <% } %>
-
-              </div>
-
+      <article class="card overflow-hidden" aria-labelledby="listing-title">
+        <div class="row g-0">
+          <div class="col-lg-6">
+            <% if (listing.hasDatabaseImage) { %>
+              <img src="/itemImage/<%= listing.id %>" class="detail-image" alt="<%= listing.title %>">
+            <% } else if (listing.image) { %>
+              <img src="/images/<%= listing.image %>" class="detail-image" alt="<%= listing.title %>">
+            <% } else { %>
+              <div class="listing-placeholder h-100" role="img" aria-label="No image uploaded">No image uploaded</div>
             <% } %>
-
           </div>
 
+          <div class="col-lg-6">
+            <div class="card-body h-100 p-md-5">
+              <p class="listing-meta mb-2"><%= listing.condition %> &middot; <%= listing.category %></p>
+              <h1 id="listing-title" class="mb-2"><%= listing.title %></h1>
+              <p class="price-tag mb-4">$<%= Number(listing.price).toFixed(2) %></p>
+
+              <dl class="mb-4">
+                <div class="mb-2"><dt class="detail-label">Meet-up</dt><dd class="d-inline"><%= listing.location || 'Not provided' %></dd></div>
+                <div class="mb-2"><dt class="detail-label">Seller</dt><dd class="d-inline"><%= listing.sellerName %></dd></div>
+              </dl>
+
+              <div class="pt-3 border-top">
+                <h2 class="h5">Description</h2>
+                <p class="mb-0"><%= listing.description || 'No description was provided for this item.' %></p>
+              </div>
+
+              <% if (currentUser) { %>
+                <div class="d-flex flex-wrap gap-2 mt-4">
+                  <% if (currentUser.id === listing.sellerId) { %>
+                    <a href="/editListing/<%= listing.id %>" class="btn btn-warning">Edit listing</a>
+                  <% } %>
+                  <% if (currentUser.role === 'admin' || currentUser.id === listing.sellerId) { %>
+                    <form action="/deleteListing/<%= listing.id %>" method="POST" onsubmit="return confirm('Delete this listing?')">
+                      <button type="submit" class="btn btn-danger">Delete listing</button>
+                    </form>
+                  <% } %>
+                </div>
+              <% } %>
+            </div>
+          </div>
         </div>
-
-      </div>
-
+      </article>
     </div>
+  </main>
 
-  </div>
-
-</body>
-</html>
+  <%- include('partials/footer') %>
