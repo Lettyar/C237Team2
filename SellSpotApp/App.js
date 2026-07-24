@@ -579,7 +579,7 @@ app.get('/listing/:id', (req, res) => {
 
 
 
-// Create a local account
+// LETTYAR [ REGISTRATON ]
 app.post('/register', validateRegistration, (req, res) => {
     const { email, password, full_name} = req.body;
     const role = 'user';
