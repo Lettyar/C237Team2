@@ -32,7 +32,26 @@ const connection = mysql.createConnection({
     host: 'c237-hannah-mysql.mysql.database.azure.com',
     user: 'c237_027',
     password: 'c237027@2026!',
-    database: 'c237_027_t2sellspot'
+    database: 'c237_027_t2ca2'
+});
+
+connection.query(`
+  CREATE TABLE IF NOT EXISTS reviews (
+    review_id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    item_id INT NOT NULL,
+    rating INT NOT NULL,
+    comment TEXT,
+    review_by INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_reviews_user FOREIGN KEY (user_id) REFERENCES users(user_id),
+    CONSTRAINT fk_reviews_item FOREIGN KEY (item_id) REFERENCES items(item_id),
+    CONSTRAINT fk_reviews_reviewer FOREIGN KEY (review_by) REFERENCES users(user_id)
+  )
+`, (error) => {
+  if (error) {
+    console.error('Error creating reviews table:', error);
+  }
 });
 
 // Multer setup for listing image upload
@@ -81,10 +100,292 @@ function checkAdmin(req, res, next) {
   next();
 }
 
-// Admins can manage all listings. Users can manage only their own listings.
-function canManageListing(user, listing) {
-  return user.role === 'admin' || user.id === listing.sellerId;
+// Only the listing owner can edit a listing.
+function canEditListing(user, listing) {
+  return user.id === listing.sellerId;
 }
+
+function updateUserAverageRating(userId, callback) {
+  const averageSql = 'SELECT AVG(rating) AS averageRating FROM reviews WHERE user_id = ?';
+
+  connection.query(averageSql, [userId], (error, results) => {
+    if (error) {
+      return callback(error);
+    }
+
+    const averageRating = results[0].averageRating !== null
+      ? Number(results[0].averageRating).toFixed(1)
+      : '0.0';
+
+    const updateSql = 'UPDATE users SET rating = ? WHERE user_id = ?';
+
+    connection.query(updateSql, [averageRating, userId], (updateError) => {
+      callback(updateError);
+    });
+  });
+}
+
+function getUserRatings(callback) {
+  const sql = `
+    SELECT
+      user_id,
+      full_name,
+      email,
+      role,
+      rating
+    FROM users
+    WHERE role = 'user'
+    ORDER BY full_name ASC
+  `;
+
+  connection.query(sql, (error, users) => {
+    if (error) {
+      return callback(error, null);
+    }
+
+    const reviewSql = `
+      SELECT user_id, AVG(rating) AS averageRating
+      FROM reviews
+      GROUP BY user_id
+    `;
+
+    connection.query(reviewSql, (reviewError, reviewResults) => {
+      if (reviewError) {
+        return callback(reviewError, null);
+      }
+
+      const reviewMap = {};
+      reviewResults.forEach((review) => {
+        reviewMap[review.user_id] = Number(review.averageRating).toFixed(1);
+      });
+
+      const updatedUsers = users.map((user) => ({
+        ...user,
+        rating: reviewMap[user.user_id] || user.rating || '0.0'
+      }));
+
+      callback(null, updatedUsers);
+    });
+  });
+}
+
+app.get('/ratings', checkAuthenticated, (req, res) => {
+  const search = (req.query.search || '').trim();
+  const values = [req.session.user.id];
+
+  let sql = `
+    SELECT
+      user_id,
+      full_name,
+      email,
+      role,
+      rating
+    FROM users
+    WHERE user_id != ?
+      AND role = 'user'
+  `;
+
+  if (search) {
+    sql += ` AND full_name LIKE ?`;
+    values.push(`%${search}%`);
+  }
+
+  sql += ` ORDER BY full_name ASC`;
+
+  connection.query(sql, values, (error, users) => {
+    if (error) {
+      console.error('Error searching users for ratings:', error);
+      return res.status(500).send('Database error');
+    }
+
+    const reviewSql = `
+      SELECT user_id, AVG(rating) AS averageRating
+      FROM reviews
+      GROUP BY user_id
+    `;
+
+    connection.query(reviewSql, (reviewError, reviewResults) => {
+      if (reviewError) {
+        console.error('Error loading review averages:', reviewError);
+        return res.status(500).send('Database error');
+      }
+
+      const reviewMap = {};
+      reviewResults.forEach((review) => {
+        reviewMap[review.user_id] = Number(review.averageRating).toFixed(1);
+      });
+
+      const ratedUsers = users.map((user) => ({
+        ...user,
+        rating: reviewMap[user.user_id] || user.rating || '0.0'
+      }));
+
+      if (ratedUsers.length === 0) {
+        return res.render('ratings', {
+          users: [],
+          search: search,
+          userListings: {}
+        });
+      }
+
+      const userIds = ratedUsers.map((user) => user.user_id);
+    const placeholders = userIds.map(() => '?').join(', ');
+    const listingSql = `
+      SELECT item_id, item_name, created_by
+      FROM items
+      WHERE created_by IN (${placeholders})
+      ORDER BY created_by, item_name ASC
+    `;
+
+    connection.query(listingSql, userIds, (listingError, listings) => {
+      if (listingError) {
+        console.error('Error loading user listings:', listingError);
+        return res.status(500).send('Database error');
+      }
+
+      const userListings = {};
+
+      listings.forEach((listing) => {
+        if (!userListings[listing.created_by]) {
+          userListings[listing.created_by] = [];
+        }
+
+        userListings[listing.created_by].push(listing);
+      });
+
+      res.render('ratings', {
+        users: ratedUsers,
+        search: search,
+        userListings: userListings
+      });
+    });
+  });
+  });
+});
+
+app.post('/ratings', checkAuthenticated, (req, res) => {
+  const targetUserId = parseInt(req.body.userId, 10);
+  const itemId = parseInt(req.body.itemId, 10);
+  const rating = parseInt(req.body.rating, 10);
+  const comment = (req.body.comment || '').trim();
+  const search = (req.body.search || '').trim();
+
+  if (!targetUserId || targetUserId === req.session.user.id) {
+    req.flash('error', 'You cannot review yourself.');
+    return res.redirect('/ratings');
+  }
+
+  if (!itemId || !rating || rating < 1 || rating > 5) {
+    req.flash('error', 'Please choose a valid rating and item.');
+    return res.redirect(`/ratings?search=${encodeURIComponent(search)}`);
+  }
+
+  if (!comment) {
+    req.flash('error', 'Please add a comment with your review.');
+    return res.redirect(`/ratings?search=${encodeURIComponent(search)}`);
+  }
+
+  const verifySql = 'SELECT item_id FROM items WHERE item_id = ? AND created_by = ?';
+
+  connection.query(verifySql, [itemId, targetUserId], (verifyError, verifyResults) => {
+    if (verifyError) {
+      console.error('Error validating review item:', verifyError);
+      req.flash('error', 'Unable to submit your review right now.');
+      return res.redirect(`/ratings?search=${encodeURIComponent(search)}`);
+    }
+
+    if (verifyResults.length === 0) {
+      req.flash('error', 'Please choose a valid listing for that user.');
+      return res.redirect(`/ratings?search=${encodeURIComponent(search)}`);
+    }
+
+    const insertSql = `
+      INSERT INTO reviews (user_id, item_id, rating, comment, review_by)
+      VALUES (?, ?, ?, ?, ?)
+    `;
+
+    connection.query(insertSql, [targetUserId, itemId, rating, comment, req.session.user.id], (insertError) => {
+      if (insertError) {
+        console.error('Error saving review:', insertError);
+        req.flash('error', 'Unable to save your review.');
+        return res.redirect(`/ratings?search=${encodeURIComponent(search)}`);
+      }
+
+      updateUserAverageRating(targetUserId, (updateError) => {
+        if (updateError) {
+          console.error('Error updating user rating:', updateError);
+        }
+
+        req.flash('success', 'Review posted successfully.');
+        return res.redirect(`/ratings?search=${encodeURIComponent(search)}`);
+      });
+    });
+  });
+});
+
+app.post('/adminboard/update-role/:id', checkAdmin, (req, res) => {
+  const userId = parseInt(req.params.id, 10);
+  const role = req.body.role === 'admin' ? 'admin' : 'user';
+
+  if (!userId) {
+    req.flash('error', 'Invalid user selection.');
+    return res.redirect('/adminboard');
+  }
+
+  if (userId === req.session.user.id && role === 'user') {
+    req.flash('error', 'You cannot remove your own admin role.');
+    return res.redirect('/adminboard');
+  }
+
+  const sql = 'UPDATE users SET role = ? WHERE user_id = ?';
+
+  connection.query(sql, [role, userId], (error) => {
+    if (error) {
+      console.error('Error updating user role:', error);
+      req.flash('error', 'Unable to update user role.');
+      return res.redirect('/adminboard');
+    }
+
+    req.flash('success', 'User role updated successfully.');
+    return res.redirect('/adminboard');
+  });
+});
+
+app.post('/adminboard/delete-user/:id', checkAdmin, (req, res) => {
+  const userId = parseInt(req.params.id, 10);
+
+  if (!userId) {
+    req.flash('error', 'Invalid user selection.');
+    return res.redirect('/adminboard');
+  }
+
+  if (userId === req.session.user.id) {
+    req.flash('error', 'You cannot delete your own account.');
+    return res.redirect('/adminboard');
+  }
+
+  const deleteListingsSql = 'DELETE FROM items WHERE created_by = ?';
+  const deleteUserSql = 'DELETE FROM users WHERE user_id = ?';
+
+  connection.query(deleteListingsSql, [userId], (error) => {
+    if (error) {
+      console.error('Error deleting user listings:', error);
+      req.flash('error', 'Unable to delete user account.');
+      return res.redirect('/adminboard');
+    }
+
+    connection.query(deleteUserSql, [userId], (deleteError) => {
+      if (deleteError) {
+        console.error('Error deleting user:', deleteError);
+        req.flash('error', 'Unable to delete user account.');
+        return res.redirect('/adminboard');
+      }
+
+      req.flash('success', 'User account deleted successfully.');
+      return res.redirect('/adminboard');
+    });
+  });
+});
 
 // Eant: display users and filter them by role
 app.get('/adminboard', checkAdmin, (req, res) => {
@@ -117,9 +418,32 @@ app.get('/adminboard', checkAdmin, (req, res) => {
       return res.status(500).send('Database error');
     }
 
-    res.render('adminboard', {
-      users: results,
-      role: role
+    const reviewSql = `
+      SELECT user_id, AVG(rating) AS averageRating
+      FROM reviews
+      GROUP BY user_id
+    `;
+
+    connection.query(reviewSql, (reviewError, reviewResults) => {
+      if (reviewError) {
+        console.error('Error loading review averages:', reviewError);
+        return res.status(500).send('Database error');
+      }
+
+      const reviewMap = {};
+      reviewResults.forEach((review) => {
+        reviewMap[review.user_id] = Number(review.averageRating).toFixed(1);
+      });
+
+      const users = results.map((user) => ({
+        ...user,
+        rating: reviewMap[user.user_id] || user.rating || '0.0'
+      }));
+
+      res.render('adminboard', {
+        users: users,
+        role: role
+      });
     });
   });
 });
@@ -148,6 +472,7 @@ app.get('/', (req, res) => {
     users.full_name AS sellerName
   FROM items
   JOIN users ON items.created_by = users.user_id
+  WHERE items.status != 'unlisted'
 `;
 
   const values = [];
@@ -254,7 +579,7 @@ app.get('/listing/:id', (req, res) => {
 
 
 
-// Create a local account
+// LETTYAR [ REGISTRATON ]
 app.post('/register', validateRegistration, (req, res) => {
     const { email, password, full_name} = req.body;
     const role = 'user';
@@ -288,6 +613,11 @@ app.post('/register', validateRegistration, (req, res) => {
 // Display login form
 app.get('/login', (req, res) => {
   res.render('login');
+});
+
+// Display registration form
+app.get('/register', (req, res) => {
+  res.render('register');
 });
 
 // LETTYAR [ LOGIN ]
@@ -355,6 +685,11 @@ app.post(
       condition,
       location
     } = req.body;
+
+    if (!title || !price || !category || !condition || !location) {
+      req.flash('error', 'Please complete all required listing fields.');
+      return res.redirect('/addListing');
+    }
 
     const imageData = req.file ? req.file.buffer : null;
     const imageType = req.file ? req.file.mimetype : null;
@@ -431,7 +766,7 @@ app.get('/itemImage/:id', (req, res) => {
 //mag
 // View listings belonging to the logged-in user
 app.get('/myListings', checkAuthenticated, (req, res) => {
-const sql = `
+let sql = `
   SELECT
     items.item_id AS id,
     items.item_name AS title,
@@ -448,10 +783,19 @@ const sql = `
     users.full_name AS sellerName
   FROM items
   JOIN users ON items.created_by = users.user_id
-  WHERE items.created_by = ?
 `;
 
-  connection.query(sql, [req.session.user.id], (error, results) => {
+  const values = [];
+
+  // Admins can view all listings; regular users can view only their own.
+  if (req.session.user.role !== 'admin') {
+    sql += ` WHERE items.created_by = ?`;
+    values.push(req.session.user.id);
+  }
+
+  sql += ` ORDER BY items.created_at DESC`;
+
+  connection.query(sql, values, (error, results) => {
     if (error) {
       console.error('Error retrieving my listings:', error);
       return res.status(500).send('Database error');
@@ -488,7 +832,7 @@ app.get('/editListing/:id', checkAuthenticated, (req, res) => {
         }
         const currentListing = results[0];
         // Check if the user owns the listing or is an admin
-        if (!canManageListing(req.session.user, {
+        if (!canEditListing(req.session.user, {
             sellerId: currentListing.created_by
         })) {
             req.flash("error", "You do not have permission to edit this listing.");
@@ -524,7 +868,7 @@ app.post('/editListing/:id', checkAuthenticated, addListingUpload.single('image'
             const currentListing = results[0];
 
             // Permission check
-            if (!canManageListing(req.session.user, {
+            if (!canEditListing(req.session.user, {
                 sellerId: currentListing.created_by
             })) {
                 req.flash("error", "You do not have permission to edit this listing.");
@@ -621,7 +965,7 @@ app.post('/editListing/:id', checkAuthenticated, addListingUpload.single('image'
 
 //Zuo Jing
 // Delete listing
-app.get('/deleteListing/:id', checkAuthenticated, (req, res) => {
+app.post('/deleteListing/:id', checkAuthenticated, (req, res) => {
   const listingId = Number.parseInt(req.params.id, 10);
 
   const checkSql = 'SELECT * FROM items WHERE item_id = ?';
@@ -641,7 +985,7 @@ app.get('/deleteListing/:id', checkAuthenticated, (req, res) => {
     const listing = results[0];
     const currentUser = req.session.user;
 
-    if (currentUser.role !== 'admin' && currentUser.user_id !== listing.user_id) {
+    if (currentUser.role !== 'admin' && currentUser.id !== listing.created_by) {
       req.flash('error', 'You do not have permission to delete this listing.');
       return res.redirect('/');
     }

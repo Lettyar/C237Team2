@@ -1,299 +1,51 @@
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-  <meta charset="UTF-8">
-
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <title>SellSpot</title>
-
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-
-  <link rel="stylesheet" href="/style.css">
-</head>
-
+<%- include('partials/head', { pageTitle: 'Marketplace' }) %>
 <body>
+  <%- include('partials/navbar', { activePage: 'marketplace' }) %>
 
-  <nav class="navbar navbar-expand-sm bg-dark navbar-dark">
-    <div class="container">
+  <main class="site-main">
+    <div class="container app-container">
+      <%- include('partials/flash') %>
 
-      <a class="navbar-brand" href="/">
-        <h3>SellSpot</h3>
-      </a>
+      <section class="hero-panel mb-4" aria-labelledby="marketplace-title">
+        <h1 id="marketplace-title">
+          <% if (currentUser) { %>Welcome back, <%= currentUser.name %>.<% } else { %>Find more. Spend less.<% } %>
+        </h1>
+        <p>SellSpot makes it easy to discover quality second-hand items and give the things you no longer need a new home.</p>
+        <div class="hero-note"><span aria-hidden="true">✓</span> Meet safely in public places and never share payment details.</div>
+      </section>
 
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-
-      <div class="collapse navbar-collapse" id="mainNavbar">
-
-        <ul class="navbar-nav me-auto">
-
-          <% if (currentUser) { %>
-
-            <li class="nav-item">
-              <a class="nav-link" href="/addListing">
-                Add Listing
-              </a>
-            </li>
-
-            <li class="nav-item">
-              <a class="nav-link" href="/myListings">
-                <%= currentUser.role==='admin' ? 'Manage Listings' : 'My Listings' %>
-              </a>
-            </li>
-
-            <% } %>
-
-        </ul>
-
-        <ul class="navbar-nav">
-
-          <% if (currentUser) { %>
-            <li class="nav-item">
-              <span class="nav-link text-white">
-                <%= currentUser.name %>
-                  <% if (currentUser.role==='admin' ) { %>
-                    <span class="badge bg-danger ms-1">Admin</span>
-                    <% } %>
-              </span>
-            </li>
-
-            <li class="nav-item">
-              <a class="btn btn-outline-light" href="/logout">
-                Logout
-              </a>
-            </li>
-
-            <% } else { %>
-
-              <li class="nav-item me-2">
-                <a class="btn btn-outline-light" href="/register">
-                  Register
-                </a>
-              </li>
-
-              <li class="nav-item">
-                <a class="btn btn-outline-light" href="/login">
-                  Login
-                </a>
-              </li>
-
-              <% } %>
-
-        </ul>
-
-      </div>
-    </div>
-  </nav>
-
-  <div class="container mt-4">
-
-    <div id="myCarousel" class="carousel slide" data-bs-ride="carousel" data-bs-interval="5000">
-
-      <div class="carousel-indicators">
-
-        <button type="button" data-bs-target="#myCarousel" data-bs-slide-to="0" class="active" aria-current="true"
-          aria-label="Slide 1"></button>
-
-        <button type="button" data-bs-target="#myCarousel" data-bs-slide-to="1" aria-label="Slide 2"></button>
-
-      </div>
-
-      <div class="carousel-inner">
-
-        <div class="carousel-item active">
-          <div class="alert-slide alert-orange">
-
-            <% if (currentUser) { %>
-
-              <h2>
-                Welcome to SellSpot, <%= currentUser.name %>
-              </h2>
-
-              <% } else { %>
-
-                <h2>
-                  Welcome to SellSpot
-                </h2>
-
-                <% } %>
-
-                  <p>
-                    Find affordable items or create a listing for something you no longer need.
-                  </p>
-
-          </div>
-        </div>
-
-        <div class="carousel-item">
-          <div class="alert-slide alert-red">
-
-            <h2>
-              Beware of Scams
-            </h2>
-
-            <p>
-              SellSpot employees will never ask for payment.
-            </p>
-
-          </div>
-        </div>
-
-      </div>
-
-    </div>
-
-    <% if (success && success.length> 0) { %>
-
-      <div class="alert alert-success mt-4">
-        <%= success[0] %>
-      </div>
-
-      <% } %>
-
-        <% if (error && error.length> 0) { %>
-
-          <div class="alert alert-danger mt-4">
-            <%= error[0] %>
-          </div>
-
-          <% } %>
-
-            <div class="p-4 my-4 bg-primary text-white rounded">
-
-              <h1>
-                Buy and sell second-hand items
-              </h1>
-
-              <p class="mb-0">
-                Find affordable items or create a listing for something you no longer need.
-              </p>
-
+      <section class="surface-card filter-panel mb-4" aria-label="Search marketplace listings">
+        <form action="/" method="GET">
+          <div class="row g-3 align-items-end">
+            <div class="col-md-6 col-lg-4">
+              <label for="search" class="form-label">Search items</label>
+              <input type="search" class="form-control" id="search" name="search" value="<%= search %>" placeholder="Try “desk lamp” or “textbook”">
             </div>
 
-            <form action="/" method="GET" class="card card-body mb-4">
+            <div class="col-md-3 col-lg-3">
+              <label for="category" class="form-label">Category</label>
+              <select class="form-select" id="category" name="category">
+                <option value="">All categories</option>
+                <option value="Electronics" <%= category === 'Electronics' ? 'selected' : '' %>>Electronics</option>
+                <option value="Fashion" <%= category === 'Fashion' ? 'selected' : '' %>>Fashion</option>
+                <option value="Home" <%= category === 'Home' ? 'selected' : '' %>>Home</option>
+                <option value="Books" <%= category === 'Books' ? 'selected' : '' %>>Books</option>
+                <option value="Sports" <%= category === 'Sports' ? 'selected' : '' %>>Sports</option>
+                <option value="Others" <%= category === 'Others' ? 'selected' : '' %>>Others</option>
+              </select>
+            </div>
 
-              <div class="row g-3 align-items-end">
-
-                <div class="col-md-6 col-lg-4">
-
-                  <label for="search" class="form-label">
-                    Search item
-                  </label>
-
-                  <input type="text" class="form-control" id="search" name="search" value="<%= search %>"
-                    placeholder="Enter item name">
-
-                </div>
-
-                <div class="col-md-4">
-
-                  <label for="category" class="form-label">
-                    Category
-                  </label>
-
-                  <select class="form-select" id="category" name="category">
-
-                    <option value="">
-                      All categories
-                    </option>
-
-                    <option value="Electronics" <%=category==='Electronics' ? 'selected' : '' %>
-                      >
-                      Electronics
-                    </option>
-
-                    <option value="Fashion" <%=category==='Fashion' ? 'selected' : '' %>
-                      >
-                      Fashion
-                    </option>
-
-                    <option value="Home" <%=category==='Home' ? 'selected' : '' %>
-                      >
-                      Home
-                    </option>
-
-                    <option value="Books" <%=category==='Books' ? 'selected' : '' %>
-                      >
-                      Books
-                    </option>
-
-                    <option value="Sports" <%=category==='Sports' ? 'selected' : '' %>
-                      >
-                      Sports
-                    </option>
-
-                    <option value="Others" <%=category==='Others' ? 'selected' : '' %>
-                      >
-                      Others
-                    </option>
-
-                  </select>
-
-                </div>
-
- <!-- Eant: filter items by condition -->
-<div class="col-md-2">
-
-  <label for="condition" class="form-label">
-    Condition
-  </label>
-
-  <select
-    class="form-select"
-    id="condition"
-    name="condition"
-  >
-
-    <option
-      value=""
-      <%= condition === '' ? 'selected' : '' %>
-    >
-      All conditions
-    </option>
-
-    <option
-      value="new"
-      <%= condition === 'new' ? 'selected' : '' %>
-    >
-      New
-    </option>
-
-    <option
-      value="like_new"
-      <%= condition === 'like_new' ? 'selected' : '' %>
-    >
-      Like New
-    </option>
-
-    <option
-      value="good"
-      <%= condition === 'good' ? 'selected' : '' %>
-    >
-      Good
-    </option>
-
-    <option
-      value="fair"
-      <%= condition === 'fair' ? 'selected' : '' %>
-    >
-      Fair
-    </option>
-
-    <option
-      value="worn"
-      <%= condition === 'worn' ? 'selected' : '' %>
-    >
-      Worn
-    </option>
-
-  </select>
-
-</div>
+            <div class="col-md-3 col-lg-3">
+              <label for="condition" class="form-label">Condition</label>
+              <select class="form-select" id="condition" name="condition">
+                <option value="" <%= condition === '' ? 'selected' : '' %>>All conditions</option>
+                <option value="new" <%= condition === 'new' ? 'selected' : '' %>>New</option>
+                <option value="like_new" <%= condition === 'like_new' ? 'selected' : '' %>>Like New</option>
+                <option value="good" <%= condition === 'good' ? 'selected' : '' %>>Good</option>
+                <option value="fair" <%= condition === 'fair' ? 'selected' : '' %>>Fair</option>
+                <option value="worn" <%= condition === 'worn' ? 'selected' : '' %>>Worn</option>
+              </select>
+            </div>
 
 <!-- Search button -->
 <div class="col-md-2 d-grid align-items-end">
@@ -303,7 +55,7 @@
   </button>
 
 </div>
-<%# clear search and filters button Eant%>
+//clear search and filters button Eant
   <div class="mt-3">
     <a href="/" class="btn btn-outline-secondary">
       Clear Search and Filters
@@ -311,103 +63,56 @@
   </div>
             </form>
 
-            <div class="d-flex justify-content-between align-items-center mb-3">
-
-              <h2>
-                Marketplace Listings
-              </h2>
-
-              <% if (currentUser) { %>
-
-                <a href="/addListing" class="btn btn-success">
-                  Add New Listing
-                </a>
-
-                <% } %>
-
+      <section aria-labelledby="listings-title">
+        <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 mb-3">
+          <div>
+            <h2 id="listings-title" class="mb-1">Marketplace listings</h2>
+            <p class="text-muted mb-0">Browse items listed by the SellSpot community.</p>
+          </div>
+          <% if (currentUser) { %>
+            <div class="d-flex flex-wrap gap-2">
+              <a href="/myListings" class="btn btn-outline-secondary"><%= currentUser.role === 'admin' ? 'Manage listings' : 'My listings' %></a>
+              <a href="/addListing" class="btn btn-primary">Sell an item</a>
             </div>
+          <% } %>
+        </div>
 
-            <% if (listings.length> 0) { %>
-
-              <div class="row g-4">
-
-                <% for (let i=0; i < listings.length; i++) { %>
-
-                  <div class="col-md-6 col-lg-4">
-                    <div class="card h-100 shadow-sm">
-
-                      <% if (listings[i].hasDatabaseImage) { %>
-
-                        <img src="/itemImage/<%= listings[i].id %>" class="card-img-top listing-image"
-                          alt="<%= listings[i].title %>">
-
-                        <% } else if (listings[i].image) { %>
-
-                          <img src="/images/<%= listings[i].image %>" class="card-img-top listing-image"
-                            alt="<%= listings[i].title %>">
-
-                          <% } else { %>
-
-                            <div class="listing-placeholder">
-                              No image uploaded
-                            </div>
-
-                            <% } %>
-
-                              <div class="card-body">
-
-                                <h5 class="card-title">
-                                  <%= listings[i].title %>
-                                </h5>
-
-                                <p class="card-text">
-
-                                  <strong>
-                                    $<%= Number(listings[i].price).toFixed(2) %>
-                                  </strong>
-
-                                </p>
-
-                                <p class="card-text text-muted">
-                                  <%= listings[i].condition %>
-                                    &middot;
-                                    <%= listings[i].category %>
-                                </p>
-
-                                <p class="card-text">
-                                  <strong>Seller:</strong>
-                                  <%= listings[i].sellerName %>
-                                </p>
-                                
-                                <p class="card-text">
-                                  <strong>Meet-up Location:</strong>
-                                  <%= listings[i].location || 'Not provided' %>
-                                </p>
-
-                                <a href="/listing/<%= listings[i].id %>" class="btn btn-primary">
-                                  View Details
-                                </a>
-
-                              </div>
-                    </div>
-                  </div>
-
+        <% if (listings.length > 0) { %>
+          <div class="row g-4">
+            <% for (let i = 0; i < listings.length; i++) { %>
+              <div class="col-sm-6 col-lg-4">
+                <article class="card listing-card">
+                  <% if (listings[i].hasDatabaseImage) { %>
+                    <img src="/itemImage/<%= listings[i].id %>" class="listing-image" alt="<%= listings[i].title %>">
+                  <% } else if (listings[i].image) { %>
+                    <img src="/images/<%= listings[i].image %>" class="listing-image" alt="<%= listings[i].title %>">
+                  <% } else { %>
+                    <div class="listing-placeholder" role="img" aria-label="No image uploaded">No image uploaded</div>
                   <% } %>
 
+                  <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start gap-3 mb-2">
+                      <h3 class="card-title h5 mb-0"><%= listings[i].title %></h3>
+                      <span class="price-tag">$<%= Number(listings[i].price).toFixed(2) %></span>
+                    </div>
+                    <p class="listing-meta mb-2"><%= listings[i].condition %> &middot; <%= listings[i].category %></p>
+                    <p class="small mb-2"><strong>Seller:</strong> <%= listings[i].sellerName %></p>
+                    <p class="small text-muted mb-3"><strong>Meet-up:</strong> <%= listings[i].location || 'Not provided' %></p>
+                    <a href="/listing/<%= listings[i].id %>" class="btn btn-primary">View details</a>
+                  </div>
+                </article>
               </div>
+            <% } %>
+          </div>
+        <% } else { %>
+          <div class="empty-state">
+            <div class="empty-state-icon" aria-hidden="true">⌕</div>
+            <h3 class="h5">No listings found</h3>
+            <p class="mb-0">Try clearing your filters or check back soon for new items.</p>
+          </div>
+        <% } %>
+      </section>
+    </div>
+  </main>
 
-              <% } else { %>
-
-                <div class="alert alert-secondary text-center">
-
-                  No listings found. Create an account and add the first item.
-
-                </div>
-
-                <% } %>
-
-  </div>
-
-</body>
-
-</html>
+  <%- include('partials/footer') %>
