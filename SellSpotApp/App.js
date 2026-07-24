@@ -615,6 +615,11 @@ app.get('/login', (req, res) => {
   res.render('login');
 });
 
+// Display registration form
+app.get('/register', (req, res) => {
+  res.render('register');
+});
+
 // LETTYAR [ LOGIN ]
 app.post('/login', (req, res) => {
     const { email, password } = req.body;
