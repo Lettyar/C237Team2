@@ -32,7 +32,7 @@ const connection = mysql.createConnection({
     host: 'c237-hannah-mysql.mysql.database.azure.com',
     user: 'c237_027',
     password: 'c237027@2026!',
-    database: 'c237_027_t2sellspot'
+    database: 'c237_027_t2ca2'
 });
 
 connection.query(`
